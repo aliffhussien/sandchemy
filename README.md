@@ -23,6 +23,26 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Phase 8 — Panelized layout (19 Jul 2026)
+
+- The palette (54 elements!) used to be one long flat wall above the
+  canvas — the real source of clutter. It's now grouped into 8 category
+  tabs (Basics, Metals, Gases, Chemistry, Electric, Weather, Life,
+  Crafting) inside its own bounded, scrollable panel.
+- The whole layout is now a proper 3-column HUD: palette on the left,
+  canvas+toolbar as the dominant center stage, Discovery Journal on the
+  right — instead of the palette stacked above everything else.
+- Erase is now a permanently pinned button at the bottom of the palette
+  panel, reachable no matter which category tab is open.
+- Discovering a new element automatically switches to its tab so the
+  "new element!" animation is actually visible.
+- Collapses to a clean single stacked column (palette → canvas → journal)
+  on narrow/mobile screens, with no horizontal overflow at any width
+  tested.
+- One small, intentional behavior change: the `1`-`9`/`0` keyboard
+  shortcuts now pick from the *current tab* instead of the whole palette —
+  documented in the cheatsheet text and in PLAN.md.
+
 ## Phase 7d — Onboarding (19 Jul 2026)
 
 - First-time visitors now get a short 3-step walkthrough: pick an element
@@ -363,12 +383,12 @@ See **PLAN.md** — the master phased plan to "perfect custom sandbox"
 (chemistry fixes → temperature → visual juice → 2.5D depth → Element Lab →
 sound → material textures). One phase per session, in order.
 
-**Phase 7 is fully shipped** — all four sub-phases (7a PWA installability,
-7b keyboard shortcuts, 7c UI redesign, 7d onboarding) are done and
-live-verified; see the changelog entries above and PLAN.md's Phase 7
-section for full detail. Next up: pick a new phase, or fold in a weekly
-content-only update (new elements via `elements.js` only, per this file's
-own maintenance model above).
+**Phase 7 and Phase 8 are both fully shipped** — all four Phase 7
+sub-phases (7a PWA installability, 7b keyboard shortcuts, 7c UI redesign,
+7d onboarding) plus Phase 8's panelized layout are done and live-verified;
+see the changelog entries above and PLAN.md for full detail. Next up: pick
+a new phase, or fold in a weekly content-only update (new elements via
+`elements.js` only, per this file's own maintenance model above).
 
 Extra ideas for after the plan is complete: daily discovery puzzles,
 rare/secret elements, journal PNG export.

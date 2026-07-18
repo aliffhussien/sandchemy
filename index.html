@@ -33,9 +33,19 @@
     <div class="counter" id="counter">0 / 7 discovered</div>
   </header>
 
-  <main>
-    <section class="play-area">
+  <!-- Phase 8: three distinct panels (palette / stage / journal) instead of
+       the palette sitting stacked above the canvas as one long column.
+       Grouping the 50+ elements into category tabs is the main fix for
+       "serabut" (clutter) — see CATEGORIES in elements.js and
+       buildPalette() in game.js. -->
+  <main class="game-layout">
+    <aside class="palette-panel panel">
+      <div class="palette-tabs" id="paletteTabs"></div>
       <div class="palette" id="palette"></div>
+      <button id="eraseChip" class="chip erase-chip" title="Erase — clears cells back to empty" aria-label="Erase tool">🧽 Erase</button>
+    </aside>
+
+    <section class="play-area panel">
       <div class="canvas-wrap">
         <canvas id="world" width="720" height="480"></canvas>
         <canvas id="fx"></canvas>
@@ -79,7 +89,7 @@
       </div>
     </section>
 
-    <aside class="journal">
+    <aside class="journal panel">
       <h2>📖 Discovery Journal</h2>
       <p class="journal-sub">Your experiments are recorded here automatically.</p>
       <ul id="journalList"></ul>
@@ -205,7 +215,7 @@
         <div class="shortcut-row"><kbd>[</kbd> <kbd>]</kbd><span>Brush size down / up</span></div>
         <div class="shortcut-row"><kbd>Ctrl/Cmd</kbd>+<kbd>Z</kbd><span>Undo</span></div>
         <div class="shortcut-row"><kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> or <kbd>Ctrl</kbd>+<kbd>Y</kbd><span>Redo</span></div>
-        <div class="shortcut-row"><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd><span>Quick-select the first 10 palette elements</span></div>
+        <div class="shortcut-row"><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd><span>Quick-select the first 10 elements in the current tab</span></div>
         <div class="shortcut-row"><kbd>E</kbd><span>Toggle Effects</span></div>
         <div class="shortcut-row"><kbd>P</kbd><span>Toggle Sensor Probe</span></div>
         <div class="shortcut-row"><kbd>L</kbd><span>Open / close Lab</span></div>

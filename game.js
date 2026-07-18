@@ -117,17 +117,48 @@ let toastTimer = null;
 let currentElement = E.SAND;
 let brushSize = 4;
 
+// Phase 8: the palette is now split into category tabs (CATEGORIES, pure
+// data from elements.js) instead of one flat wall of 50+ chips — the plan
+// being "logically smart, compacted, minimalist," not everything visible
+// at once. Erase is deliberately NOT part of any category: it's a tool,
+// not a substance, so it's rendered as its own pinned chip (#eraseChip in
+// index.html) that stays reachable no matter which tab is open.
+const paletteTabsEl = document.getElementById('paletteTabs');
+const eraseChipEl = document.getElementById('eraseChip');
+let currentCategory = (ELEMENTS[currentElement] && ELEMENTS[currentElement].category) || CATEGORIES[0].id;
+
 function buildPalette(newId) {
+  // If a freshly-discovered element lives in a different tab than the one
+  // currently open, switch to it — otherwise the "new-chip" pop animation
+  // would fire on a tab the player isn't looking at and they'd never see it.
+  if (newId !== undefined && ELEMENTS[newId] && ELEMENTS[newId].category && ELEMENTS[newId].category !== currentCategory) {
+    currentCategory = ELEMENTS[newId].category;
+  }
+
+  paletteTabsEl.innerHTML = '';
+  for (const cat of CATEGORIES) {
+    const tab = document.createElement('button');
+    tab.className = 'palette-tab' + (cat.id === currentCategory ? ' active' : '');
+    tab.textContent = cat.icon + ' ' + cat.label;
+    tab.onclick = () => { currentCategory = cat.id; buildPalette(); };
+    paletteTabsEl.appendChild(tab);
+  }
+
   paletteEl.innerHTML = '';
   const ids = Object.keys(ELEMENTS).map(Number)
-    .filter(id => !ELEMENTS[id].hidden && (ELEMENTS[id].starter || discoveries[id]));
-  ids.push(-1); // eraser
+    .filter(id => !ELEMENTS[id].hidden && (ELEMENTS[id].starter || discoveries[id]))
+    .filter(id => (ELEMENTS[id].category || CATEGORIES[0].id) === currentCategory);
   for (const id of ids) {
     const chip = document.createElement('button');
     chip.className = 'chip' + (id === currentElement ? ' active' : '') + (id === newId ? ' new-chip' : '');
-    chip.textContent = id === -1 ? '🧽 Erase' : ELEMENTS[id].emoji + ' ' + ELEMENTS[id].name;
+    chip.textContent = ELEMENTS[id].emoji + ' ' + ELEMENTS[id].name;
     chip.onclick = () => { currentElement = id; buildPalette(); };
     paletteEl.appendChild(chip);
+  }
+
+  if (eraseChipEl) {
+    eraseChipEl.classList.toggle('active', currentElement === -1);
+    eraseChipEl.onclick = () => { currentElement = -1; buildPalette(); };
   }
 }
 

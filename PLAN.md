@@ -9,15 +9,16 @@
 > After editing, rsync this folder to the session scratchpad and serve from
 > there (see the `sandchemy` entry pattern in `Documents/.claude/launch.json`).
 
-> **Phase 7 is fully shipped (19 Jul 2026) — 7a/7b/7c/7d all DONE and
-> live-verified.** All four sub-phases were built in one continuous session
-> at Cat's explicit request to push through despite the "one phase per
-> session" rule below — each sub-phase was still verified live in the
-> browser before moving to the next, and the flagged open decisions for 7c
-> were still asked rather than guessed. **Next up: pick a new Phase from
-> here, or start a fresh weekly content update (new elements via
-> `elements.js` only, per README's own maintenance model).** The old
-> sub-phase kickoff prompt below is kept for reference/history:
+> **Phase 7 (7a/7b/7c/7d) AND Phase 8 (panelized layout) are both fully
+> shipped (19 Jul 2026), live-verified.** All of Phase 7's sub-phases plus
+> Phase 8 were built in one continuous session at Cat's explicit request to
+> push through despite the "one phase per session" rule below — every
+> sub-phase/phase was still verified live in the browser before moving to
+> the next, and flagged open decisions (7c's, then Phase 8's) were still
+> asked rather than guessed. **Next up: pick a new Phase from here, or
+> start a fresh weekly content update (new elements via `elements.js` only,
+> per README's own maintenance model).** The old sub-phase kickoff prompt
+> below is kept for reference/history:
 >
 > ```
 > Read PLAN.md and README.md in this repo (Sandchemy — a falling-sand
@@ -1667,6 +1668,112 @@ pick up any of 7b–7d independently with full context, without re-deriving
 the open decisions above from scratch. See the kickoff prompt near the top
 of this file for how to hand this off.
 
+## Phase 8 — Panelized layout (palette tabs, 3-column HUD)
+
+**Origin (19 Jul 2026):** Aliff asked to "polish the UI better... maybe we
+split into panel so [it's] not so cluttered, more structured, organized,
+user friendly" — the palette had grown to 54 elements in one long flat wall
+above the canvas, which was the actual root of the clutter complaint, not
+the toolbar (already addressed in 7c).
+
+**Open decisions, asked before building (not guessed):**
+- Palette organization — Aliff picked **tabs by category** (Basics, Metals,
+  Gases, Chemistry, Electric, Weather, Life, Crafting) over a single
+  scrollable list with section headers or leaving it flat.
+- Overall layout shape — Aliff picked a **3-column HUD** (palette sidebar /
+  canvas+toolbar center stage / journal sidebar) over a smaller change that
+  just added the journal as a sidebar next to an unchanged top-stacked
+  palette.
+- A follow-up instruction mid-session asked explicitly for the responsive
+  behavior to be "logically smart, compacted, minimalist" on small
+  screens — treated as a first-class requirement throughout, not an
+  afterthought bolted on at the end (see the mobile verification below).
+
+**What shipped:**
+- **`elements.js`** gained one new pure-data field, `category:`, on all 54
+  non-hidden elements (same shape as the existing `texture:`/`particle:`
+  fields — no engine meaning, just grouping data) plus a new `CATEGORIES`
+  array (id/label/icon per tab, in display order). Counts: Basics 16,
+  Metals 8, Gases 4, Electric 7 (folds Lightning/Copper/Battery/Spark in
+  with Uranium/Radiation/Nuclear Waste — "high-energy/tech" as one tab
+  rather than two near-empty ones), Chemistry 6, Crafting 5, Life 5,
+  Weather 3 — verified summing to exactly 54, nothing missed.
+- **`game.js`'s `buildPalette()`** (existing UI-building code, not
+  physics — same section of the file `renderJournal()`/`showToast()`
+  already lived in) now renders a row of category tab buttons plus only
+  the chips belonging to the active tab. Erase is deliberately NOT part of
+  any tab — it's a tool, not a substance — so it's now a permanently
+  pinned chip (`#eraseChip` in `index.html`) that stays reachable
+  regardless of which tab is open. When a newly-discovered element belongs
+  to a different tab than the one currently open, `buildPalette()` now
+  auto-switches to it first, so the existing "new-chip" pop animation is
+  actually visible instead of firing silently on a hidden tab.
+- **`index.html`** restructured `<main>` into three sibling panels instead
+  of the palette sitting stacked above the canvas inside one column: a new
+  `.palette-panel` (tabs + scrollable chip list + pinned Erase), the
+  existing `.play-area` (canvas+toolbar+hint, unchanged internally, just
+  promoted to a sibling panel), and the existing `.journal` (unchanged
+  internally). All three share a new `.panel` class for consistent card
+  chrome.
+- **`style.css`**: new `.game-layout` CSS grid (`260px 1fr 280px` on wide
+  viewports) replacing the old flex-wrap `main`; a bounded-height
+  `.palette-panel` (600px desktop / 320px mobile) with its OWN internal
+  scroll on just the chip list — tabs and the pinned Erase chip stay fixed,
+  only the middle scrolls, so the panel reads as a contained list rather
+  than an ever-growing wall. A `max-width: 900px` media query collapses
+  the grid to a single column, stacking panels in the same
+  pick-then-paint-then-discover order they're already in in the DOM
+  (palette → stage → journal).
+- `document.styleSheets[0].cssRules.length`: **122 before → 130 after**
+  (122 was itself already up from 7c's own 110, due to 7d's onboarding CSS
+  landing in between — not a regression, just this session's actual
+  starting point). A sane, explainable +8, confirmed parsing fully both
+  sides.
+
+**One real, intentional behavior change worth flagging honestly, found
+during verification, not treated as a bug:** 7b's `1`–`9`/`0` quick-select
+shortcuts pick the Nth chip in `#palette` DOM order — since `#palette` now
+only ever contains the ACTIVE tab's chips instead of all 54, those
+shortcuts are now tab-relative ("first 10 elements in whatever tab is
+open") rather than globally first-10-overall. Confirmed via a live test:
+with the Chemistry tab open, pressing `2` correctly selected Salt Water
+(that tab's 2nd chip), not whatever used to be globally 2nd. This is a
+sensible, expected side effect of categorizing the palette, not a
+regression — updated the cheatsheet's own copy (`index.html`) to say
+"the current tab" instead of "the palette" so it stays accurate.
+
+**Live browser verification (19 Jul 2026):**
+- Tab switching confirmed via direct clicks: Basics → Metals correctly
+  swapped the visible chip list from 16 items to exactly the 8 metals,
+  active-tab styling moved with it.
+- A real mouse click on a Metals-tab chip (Gold) correctly set
+  `currentElement` to Gold's id, and painting it onto the live canvas
+  placed real Gold cells in `grid` (37 cells from one brush stroke) —
+  confirms the id-based wiring survived the DOM restructuring.
+- Discovery auto-tab-switch confirmed by directly triggering a real
+  discovery (`discover(E.FOAM, ...)`, Foam being one of only 3 elements in
+  the whole roster that isn't `starter: true`): `currentCategory` switched
+  to `'chemistry'` on its own, the Chemistry tab visibly became active, and
+  the new-chip pop class landed on the correct chip — the exact payoff this
+  feature was built for, confirmed live rather than assumed from the code.
+- Erase chip confirmed pinned and reachable at the bottom of the palette
+  panel regardless of which tab is open or how long that tab's list is.
+- Gear menu (Clear/Reset) reconfirmed still opening correctly after the
+  layout restructuring.
+- **Mobile responsiveness checked thoroughly, matching the mid-session
+  instruction to treat it as first-class:** at a 375px request (this
+  session's tooling floors out around 500px regardless of a narrower ask,
+  same limitation hit in 7c), the grid correctly collapsed to one column,
+  panels stacked in DOM order (palette → stage → journal), the palette's
+  own tabs wrapped cleanly into two rows, its chip list stayed bounded with
+  its own internal scrollbar rather than pushing the page layout around,
+  and `document.body.scrollWidth` never exceeded `window.innerWidth` at
+  any width tested — zero horizontal overflow.
+- Zero console errors across every check in this pass (fresh loads, tab
+  switching, painting, discovery, gear menu, mobile resize).
+  `localStorage` cleared afterward.
+- **Phase 8 has no open items left.**
+
 ---
 
 ## Standing rules for every phase
@@ -1796,3 +1903,15 @@ of this file for how to hand this off.
     fresh profile shows it once, both the Skip path and the
     complete-via-shortcuts path correctly set the flag and never show it
     again on reload, zero console errors. No open items.)
+- [x] Phase 8 — Panelized layout (palette category tabs + 3-column HUD) —
+  19 Jul 2026 (new `category:` field on all 54 elements + `CATEGORIES` in
+  elements.js; game.js's buildPalette() now renders tabs + a pinned Erase
+  chip instead of one flat 54-chip wall, auto-switching tabs when a new
+  discovery lands elsewhere; index.html/style.css restructured into a
+  3-panel `.game-layout` grid (palette/stage/journal), collapsing to one
+  stacked column under 900px. cssRules 122→130, sane. Live-verified: tab
+  switching, painting after a tab-restructured click, discovery auto-tab-
+  switch, pinned Erase, gear menu, and mobile stacking/scroll all confirmed
+  with zero console errors. One intentional, documented behavior change:
+  7b's 1-9/0 shortcuts are now tab-relative instead of palette-global.
+  No open items.)

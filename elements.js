@@ -136,12 +136,12 @@ const E = {
 //             see effects.js's texHash()/drawTexture().
 const ELEMENTS = {
   [E.EMPTY]:    { name: 'Empty',    color: [13, 15, 26],    hidden: true, density: 1.2 },
-  [E.WALL]:     { name: 'Wall',     emoji: '🧱', color: [92, 96, 112],  type: 'static', starter: true, texture: 'brick' },
-  [E.SAND]:     { name: 'Sand',     emoji: '⏳', color: [226, 194, 104], type: 'powder', starter: true, density: 1600, particle: 'dust' },
-  [E.WATER]:    { name: 'Water',    emoji: '💧', color: [58, 128, 209],  type: 'liquid', starter: true, dispersion: 4, particle: 'bubble',
+  [E.WALL]:     { name: 'Wall',     emoji: '🧱', color: [92, 96, 112],  type: 'static', starter: true, texture: 'brick', category: 'basics' },
+  [E.SAND]:     { name: 'Sand',     emoji: '⏳', color: [226, 194, 104], type: 'powder', starter: true, density: 1600, particle: 'dust', category: 'basics' },
+  [E.WATER]:    { name: 'Water',    emoji: '💧', color: [58, 128, 209],  type: 'liquid', starter: true, dispersion: 4, particle: 'bubble', category: 'basics',
                   density: 1000, boilsAt: 100, boilsTo: E.STEAM, freezesAt: 0, freezesTo: E.ICE },
-  [E.FIRE]:     { name: 'Fire',     emoji: '🔥', color: [255, 120, 40],  type: 'fire',   starter: true, heatEmit: 900, particle: 'spark' },
-  [E.LAVA]:     { name: 'Lava',     emoji: '🌋', color: [226, 88, 34],   type: 'liquid', starter: true, dispersion: 1, viscous: true, particle: 'smoke',
+  [E.FIRE]:     { name: 'Fire',     emoji: '🔥', color: [255, 120, 40],  type: 'fire',   starter: true, heatEmit: 900, particle: 'spark', category: 'basics' },
+  [E.LAVA]:     { name: 'Lava',     emoji: '🌋', color: [226, 88, 34],   type: 'liquid', starter: true, dispersion: 1, viscous: true, particle: 'smoke', category: 'basics',
                   density: 2750, heatEmit: 1150, freezesAt: 950, freezesTo: E.STONE },
   // Ice's heatEmit is -40, not the literal 0°C SCIENCE.md lists ("ice sits
   // at its melting point") — sitting EXACTLY at its own melt threshold with
@@ -151,97 +151,113 @@ const ELEMENTS = {
   // scene for a while and a lava/fire source still measurably speeds up its
   // melting, without flash-melting the instant it's placed. See PLAN.md
   // Phase 2.5 notes for the empirical tuning behind this number.
-  [E.ICE]:      { name: 'Ice',      emoji: '🧊', color: [174, 227, 245], type: 'powder', starter: true,
+  [E.ICE]:      { name: 'Ice',      emoji: '🧊', color: [174, 227, 245], type: 'powder', starter: true, category: 'basics',
                   density: 917, heatEmit: -40, meltsAt: 0, meltsTo: E.WATER },
-  [E.SEED]:     { name: 'Seed',     emoji: '🌰', color: [122, 82, 48],   type: 'powder', starter: true, density: 600, ignitesAt: 300 },
-  [E.DIRT]:     { name: 'Dirt',     emoji: '🟫', color: [96, 66, 40],    type: 'powder', starter: true, density: 1300 },
+  [E.SEED]:     { name: 'Seed',     emoji: '🌰', color: [122, 82, 48],   type: 'powder', starter: true, density: 600, ignitesAt: 300, category: 'basics' },
+  [E.DIRT]:     { name: 'Dirt',     emoji: '🟫', color: [96, 66, 40],    type: 'powder', starter: true, density: 1300, category: 'basics' },
 
   // ---- Phase 2.6 starters: metals, gases, lightning, salt, oil ----
   // (see SCIENCE.md "New elements" for the why behind each pick)
-  [E.GOLD]:     { name: 'Gold',     emoji: '🟡', color: [212, 175, 55],  type: 'powder', starter: true,
+  [E.GOLD]:     { name: 'Gold',     emoji: '🟡', color: [212, 175, 55],  type: 'powder', starter: true, category: 'metals',
                   density: 19300, meltsAt: 1064, meltsTo: E.MOLTEN_GOLD, texture: 'metallic' },
-  [E.IRON]:     { name: 'Iron',     emoji: '⚙️', color: [130, 130, 140], type: 'powder', starter: true,
+  [E.IRON]:     { name: 'Iron',     emoji: '⚙️', color: [130, 130, 140], type: 'powder', starter: true, category: 'metals',
                   density: 7870, texture: 'metallic' },   // no meltsAt on purpose — Lava (1150°) genuinely can't melt Iron (1538°)
-  [E.LEAD]:     { name: 'Lead',     emoji: '⬛', color: [85, 90, 98],    type: 'powder', starter: true,
+  [E.LEAD]:     { name: 'Lead',     emoji: '⬛', color: [85, 90, 98],    type: 'powder', starter: true, category: 'metals',
                   density: 11340, meltsAt: 327, meltsTo: E.MOLTEN_LEAD, texture: 'metallic' },
-  [E.MERCURY]:  { name: 'Mercury',  emoji: '☿️', color: [196, 196, 206], type: 'liquid', starter: true,
+  [E.MERCURY]:  { name: 'Mercury',  emoji: '☿️', color: [196, 196, 206], type: 'liquid', starter: true, category: 'metals',
                   density: 13534, freezesAt: -39, freezesTo: E.FROZEN_MERCURY }, // liquid metal at room temp — no starter needs its own heatEmit here, ambient (25°) already sits safely above -39°
-  [E.OXYGEN]:   { name: 'Oxygen',   emoji: '🅾️', color: [200, 225, 255], type: 'gas', starter: true, density: 1.43 },
-  [E.HYDROGEN]: { name: 'Hydrogen', emoji: '🎈', color: [230, 240, 255], type: 'gas', starter: true, density: 0.09 },
-  [E.NEON]:     { name: 'Neon',     emoji: '💡', color: [225, 225, 235], type: 'gas', starter: true, density: 0.90 },
+  [E.OXYGEN]:   { name: 'Oxygen',   emoji: '🅾️', color: [200, 225, 255], type: 'gas', starter: true, density: 1.43, category: 'gases' },
+  [E.HYDROGEN]: { name: 'Hydrogen', emoji: '🎈', color: [230, 240, 255], type: 'gas', starter: true, density: 0.09, category: 'gases' },
+  [E.NEON]:     { name: 'Neon',     emoji: '💡', color: [225, 225, 235], type: 'gas', starter: true, density: 0.90, category: 'gases' },
   // Lightning is a brief, overwhelming spark — reuses Fire's aging/burnout
   // logic (it's gone after a couple frames) with a huge heatEmit so its
   // radiant touch is unmistakable, but its OWN stored reading isn't load-
   // bearing (nothing checks Lightning's own temp) so no headroom fix needed.
-  [E.LIGHTNING]: { name: 'Lightning', emoji: '⚡', color: [230, 240, 255], type: 'fire', starter: true, heatEmit: 30000 },
-  [E.SALT]:     { name: 'Salt',     emoji: '🧂', color: [240, 240, 235], type: 'powder', starter: true, density: 2170 },
-  [E.OIL]:      { name: 'Oil',      emoji: '🛢️', color: [40, 35, 30],    type: 'liquid', starter: true,
+  [E.LIGHTNING]: { name: 'Lightning', emoji: '⚡', color: [230, 240, 255], type: 'fire', starter: true, heatEmit: 30000, category: 'electric' },
+  [E.SALT]:     { name: 'Salt',     emoji: '🧂', color: [240, 240, 235], type: 'powder', starter: true, density: 2170, category: 'chemistry' },
+  [E.OIL]:      { name: 'Oil',      emoji: '🛢️', color: [40, 35, 30],    type: 'liquid', starter: true, category: 'chemistry',
                   density: 900, ignitesAt: 250 },
 
   // ---- Discoverable elements (the fun part) ----
   // As of Phase 7, all elements are shown in the palette (starter: true) 
   // to allow the user to see everything up front.
-  [E.STEAM]:    { name: 'Steam',    emoji: '💨', color: [200, 212, 224], type: 'gas', starter: true, density: 0.6,
+  [E.STEAM]:    { name: 'Steam',    emoji: '💨', color: [200, 212, 224], type: 'gas', starter: true, density: 0.6, category: 'basics',
                   revertsTo: E.CLOUD, revertsAfter: 300 },
-  [E.OBSIDIAN]: { name: 'Obsidian', emoji: '🖤', color: [43, 34, 61],    type: 'static', starter: true, density: 2400, texture: 'rocky' },
-  [E.GLASS]:    { name: 'Glass',    emoji: '🔮', color: [186, 227, 222], type: 'static', starter: true, density: 2500, texture: 'crystal' },
-  [E.MUD]:      { name: 'Mud',      emoji: '🟤', color: [107, 74, 43],   type: 'powder', starter: true, slow: true, density: 1800 },
-  [E.PLANT]:    { name: 'Plant',    emoji: '🌿', color: [63, 163, 77],   type: 'plant', starter: true, density: 600, ignitesAt: 300, burnsToAsh: true },
-  [E.ASH]:      { name: 'Ash',      emoji: '🌫️', color: [158, 158, 158], type: 'powder', starter: true, density: 600 },
-  [E.STONE]:    { name: 'Stone',    emoji: '🪨', color: [120, 118, 112], type: 'static', starter: true, density: 2900, texture: 'rocky' },
+  [E.OBSIDIAN]: { name: 'Obsidian', emoji: '🖤', color: [43, 34, 61],    type: 'static', starter: true, density: 2400, texture: 'rocky', category: 'basics' },
+  [E.GLASS]:    { name: 'Glass',    emoji: '🔮', color: [186, 227, 222], type: 'static', starter: true, density: 2500, texture: 'crystal', category: 'basics' },
+  [E.MUD]:      { name: 'Mud',      emoji: '🟤', color: [107, 74, 43],   type: 'powder', starter: true, slow: true, density: 1800, category: 'basics' },
+  [E.PLANT]:    { name: 'Plant',    emoji: '🌿', color: [63, 163, 77],   type: 'plant', starter: true, density: 600, ignitesAt: 300, burnsToAsh: true, category: 'basics' },
+  [E.ASH]:      { name: 'Ash',      emoji: '🌫️', color: [158, 158, 158], type: 'powder', starter: true, density: 600, category: 'basics' },
+  [E.STONE]:    { name: 'Stone',    emoji: '🪨', color: [120, 118, 112], type: 'static', starter: true, density: 2900, texture: 'rocky', category: 'basics' },
   // Molten Gold/Lead need a heatEmit above their own freezesAt, same fix as
   // Ice's -40 in Phase 2.5: freshly PAINTING a discovered molten metal would
   // otherwise default to ambient (25°) — below their solidus — and instant-
   // freeze back to the solid on the very first tick.
-  [E.MOLTEN_GOLD]: { name: 'Molten Gold', emoji: '🔶', color: [255, 196, 64], type: 'liquid', starter: true,
+  [E.MOLTEN_GOLD]: { name: 'Molten Gold', emoji: '🔶', color: [255, 196, 64], type: 'liquid', starter: true, category: 'metals',
                      density: 19300, heatEmit: 1100, freezesAt: 1064, freezesTo: E.GOLD },
-  [E.RUST]:     { name: 'Rust',     emoji: '🟠', color: [150, 80, 40],   type: 'powder', starter: true, density: 5250 },
-  [E.MOLTEN_LEAD]: { name: 'Molten Lead', emoji: '🔴', color: [210, 90, 60], type: 'liquid', starter: true,
+  [E.RUST]:     { name: 'Rust',     emoji: '🟠', color: [150, 80, 40],   type: 'powder', starter: true, density: 5250, category: 'metals' },
+  [E.MOLTEN_LEAD]: { name: 'Molten Lead', emoji: '🔴', color: [210, 90, 60], type: 'liquid', starter: true, category: 'metals',
                      density: 11340, heatEmit: 400, freezesAt: 327, freezesTo: E.LEAD },
   // Same headroom fix, other direction: Frozen Mercury painted fresh would
   // default to ambient (25°) — above its own -39° melt point — and instant-
   // melt back to liquid Mercury immediately without this.
-  [E.FROZEN_MERCURY]: { name: 'Frozen Mercury', emoji: '⚪', color: [170, 170, 182], type: 'powder', starter: true,
+  [E.FROZEN_MERCURY]: { name: 'Frozen Mercury', emoji: '⚪', color: [170, 170, 182], type: 'powder', starter: true, category: 'metals',
                         density: 13534, heatEmit: -60, meltsAt: -39, meltsTo: E.MERCURY },
-  [E.GLOWING_NEON]: { name: 'Glowing Neon', emoji: '✨', color: [255, 90, 60], type: 'gas', starter: true,
+  [E.GLOWING_NEON]: { name: 'Glowing Neon', emoji: '✨', color: [255, 90, 60], type: 'gas', starter: true, category: 'gases',
                       density: 0.90, revertsTo: E.NEON, revertsAfter: 150 },
-  [E.SALTWATER]: { name: 'Salt Water', emoji: '🌊', color: [50, 140, 170], type: 'liquid', starter: true, dispersion: 4, particle: 'bubble',
+  [E.SALTWATER]: { name: 'Salt Water', emoji: '🌊', color: [50, 140, 170], type: 'liquid', starter: true, dispersion: 4, particle: 'bubble', category: 'chemistry',
                    density: 1025, boilsAt: 100, boilsTo: E.STEAM, freezesAt: -10, freezesTo: E.ICE },
-  
+
   // ---- Phase 7: Lantern Crafting Chain ----
-  [E.WOOD]:     { name: 'Wood',     emoji: '🪵', color: [133, 94, 66],   type: 'static', starter: true, density: 600, ignitesAt: 300, burnsToAsh: true, texture: 'grain' },
-  [E.STRING]:   { name: 'String',   emoji: '🧵', color: [240, 240, 240], type: 'powder', starter: true, density: 300, ignitesAt: 250, burnsToAsh: true },
-  [E.WICK]:     { name: 'Wick',     emoji: '🕯️', color: [210, 210, 180], type: 'static', starter: true, density: 400, ignitesAt: 150, burnsToAsh: true },
-  [E.LANTERN]:  { name: 'Lantern',  emoji: '🪔', color: [140, 130, 120], type: 'static', starter: true, density: 2500 },
+  [E.WOOD]:     { name: 'Wood',     emoji: '🪵', color: [133, 94, 66],   type: 'static', starter: true, density: 600, ignitesAt: 300, burnsToAsh: true, texture: 'grain', category: 'crafting' },
+  [E.STRING]:   { name: 'String',   emoji: '🧵', color: [240, 240, 240], type: 'powder', starter: true, density: 300, ignitesAt: 250, burnsToAsh: true, category: 'crafting' },
+  [E.WICK]:     { name: 'Wick',     emoji: '🕯️', color: [210, 210, 180], type: 'static', starter: true, density: 400, ignitesAt: 150, burnsToAsh: true, category: 'crafting' },
+  [E.LANTERN]:  { name: 'Lantern',  emoji: '🪔', color: [140, 130, 120], type: 'static', starter: true, density: 2500, category: 'crafting' },
   // Lit lantern stays static and emits heat forever without burning out
-  [E.LIT_LANTERN]: { name: 'Lit Lantern', emoji: '🏮', color: [255, 120, 60], type: 'static', starter: true, density: 1000, heatEmit: 600, particle: 'spark' },
-  
+  [E.LIT_LANTERN]: { name: 'Lit Lantern', emoji: '🏮', color: [255, 120, 60], type: 'static', starter: true, density: 1000, heatEmit: 600, particle: 'spark', category: 'crafting' },
+
   // ---- Phases 8, 9, 10 Elements ----
-  [E.AMINO_ACID]: { name: 'Amino Acid', emoji: '🧬', color: [170, 80, 200], type: 'liquid', starter: true, density: 1050 },
-  [E.MICROBE]:    { name: 'Microbe',    emoji: '🦠', color: [140, 200, 120], type: 'powder', starter: true, density: 1000, slow: true },
-  [E.ALGAE]:      { name: 'Algae',      emoji: '🦠', color: [80, 180, 100],  type: 'plant',  starter: true, density: 600 },
-  
-  [E.CLOUD]:      { name: 'Cloud',      emoji: '☁️', color: [230, 240, 250], type: 'gas',    starter: true, density: 0.4, revertsTo: E.WATER, revertsAfter: 600 },
-  [E.SNOW]:       { name: 'Snow',       emoji: '❄️', color: [240, 250, 255], type: 'powder', starter: true, density: 200, heatEmit: -20, meltsAt: 5, meltsTo: E.WATER },
-  [E.ACID_RAIN]:  { name: 'Acid Rain',  emoji: '🌧️', color: [160, 255, 120], type: 'liquid', starter: true, density: 1025 },
-  
-  [E.COPPER]:     { name: 'Copper',     emoji: '🟧', color: [184, 115, 51],  type: 'static', starter: true, density: 8960, meltsAt: 1085, texture: 'metallic' },
-  [E.BATTERY]:    { name: 'Battery',    emoji: '🔋', color: [60, 60, 70],    type: 'static', starter: true, density: 3000, texture: 'metallic' },
-  [E.SPARK]:      { name: 'Spark',      emoji: '⚡', color: [255, 255, 100], type: 'gas',    starter: true, density: 0, revertsTo: E.EMPTY, revertsAfter: 5, heatEmit: 5000 },
-  
-  [E.VOLCANO]:    { name: 'Magma Vent', emoji: '🌋', color: [100, 30, 20],   type: 'static', starter: true, density: 3000, heatEmit: 1200 },
+  [E.AMINO_ACID]: { name: 'Amino Acid', emoji: '🧬', color: [170, 80, 200], type: 'liquid', starter: true, density: 1050, category: 'life' },
+  [E.MICROBE]:    { name: 'Microbe',    emoji: '🦠', color: [140, 200, 120], type: 'powder', starter: true, density: 1000, slow: true, category: 'life' },
+  [E.ALGAE]:      { name: 'Algae',      emoji: '🦠', color: [80, 180, 100],  type: 'plant',  starter: true, density: 600, category: 'life' },
 
-  [E.BAKING_SODA]: { name: 'Baking Soda', type: 'powder', emoji: '🧂', color: [240, 240, 240], density: 2200, starter: true },
-  [E.VINEGAR]: { name: 'Vinegar', type: 'liquid', emoji: '🧪', color: [200, 220, 210], density: 1050, boilsAt: 100, boilsTo: E.STEAM, freezesAt: -2, freezesTo: E.ICE, starter: true },
-  [E.FOAM]: { name: 'Foam', type: 'gas', emoji: '🫧', color: [230, 230, 240], density: 100, starter: false },
+  [E.CLOUD]:      { name: 'Cloud',      emoji: '☁️', color: [230, 240, 250], type: 'gas',    starter: true, density: 0.4, revertsTo: E.WATER, revertsAfter: 600, category: 'weather' },
+  [E.SNOW]:       { name: 'Snow',       emoji: '❄️', color: [240, 250, 255], type: 'powder', starter: true, density: 200, heatEmit: -20, meltsAt: 5, meltsTo: E.WATER, category: 'weather' },
+  [E.ACID_RAIN]:  { name: 'Acid Rain',  emoji: '🌧️', color: [160, 255, 120], type: 'liquid', starter: true, density: 1025, category: 'weather' },
 
-  [E.FISH]: { name: 'Fish', type: 'creature', habitat: E.WATER, emoji: '🐟', color: [255, 120, 50], diesAt: 40, diesTo: E.ASH, starter: true },
-  [E.BUG]: { name: 'Bug', type: 'creature', habitat: E.EMPTY, emoji: '🐜', color: [80, 50, 20], diesAt: 55, diesTo: E.ASH, starter: true },
+  [E.COPPER]:     { name: 'Copper',     emoji: '🟧', color: [184, 115, 51],  type: 'static', starter: true, density: 8960, meltsAt: 1085, texture: 'metallic', category: 'electric' },
+  [E.BATTERY]:    { name: 'Battery',    emoji: '🔋', color: [60, 60, 70],    type: 'static', starter: true, density: 3000, texture: 'metallic', category: 'electric' },
+  [E.SPARK]:      { name: 'Spark',      emoji: '⚡', color: [255, 255, 100], type: 'gas',    starter: true, density: 0, revertsTo: E.EMPTY, revertsAfter: 5, heatEmit: 5000, category: 'electric' },
 
-  [E.URANIUM]: { name: 'Uranium', type: 'static', emoji: '☢️', color: [50, 150, 50], density: 19050, heatEmit: 300, meltsAt: 1132, meltsTo: E.LAVA, starter: true },
-  [E.RADIATION]: { name: 'Radiation', type: 'gas', emoji: '❇️', color: [100, 255, 100], density: 0, starter: false },
-  [E.NUCLEAR_WASTE]: { name: 'Nuclear Waste', type: 'liquid', emoji: '🧪', color: [20, 80, 20], density: 3000, heatEmit: 80, starter: false }
+  [E.VOLCANO]:    { name: 'Magma Vent', emoji: '🌋', color: [100, 30, 20],   type: 'static', starter: true, density: 3000, heatEmit: 1200, category: 'basics' },
+
+  [E.BAKING_SODA]: { name: 'Baking Soda', type: 'powder', emoji: '🧂', color: [240, 240, 240], density: 2200, starter: true, category: 'chemistry' },
+  [E.VINEGAR]: { name: 'Vinegar', type: 'liquid', emoji: '🧪', color: [200, 220, 210], density: 1050, boilsAt: 100, boilsTo: E.STEAM, freezesAt: -2, freezesTo: E.ICE, starter: true, category: 'chemistry' },
+  [E.FOAM]: { name: 'Foam', type: 'gas', emoji: '🫧', color: [230, 230, 240], density: 100, starter: false, category: 'chemistry' },
+
+  [E.FISH]: { name: 'Fish', type: 'creature', habitat: E.WATER, emoji: '🐟', color: [255, 120, 50], diesAt: 40, diesTo: E.ASH, starter: true, category: 'life' },
+  [E.BUG]: { name: 'Bug', type: 'creature', habitat: E.EMPTY, emoji: '🐜', color: [80, 50, 20], diesAt: 55, diesTo: E.ASH, starter: true, category: 'life' },
+
+  [E.URANIUM]: { name: 'Uranium', type: 'static', emoji: '☢️', color: [50, 150, 50], density: 19050, heatEmit: 300, meltsAt: 1132, meltsTo: E.LAVA, starter: true, category: 'electric' },
+  [E.RADIATION]: { name: 'Radiation', type: 'gas', emoji: '❇️', color: [100, 255, 100], density: 0, starter: false, category: 'electric' },
+  [E.NUCLEAR_WASTE]: { name: 'Nuclear Waste', type: 'liquid', emoji: '🧪', color: [20, 80, 20], density: 3000, heatEmit: 80, starter: false, category: 'electric' }
 };
+
+// ---- Phase 8: palette categories (pure data, read by game.js's
+// buildPalette()/buildPaletteTabs() to group the 50+ elements into tabs
+// instead of one long flat wall of chips). Order here is the tab display
+// order. Erase is NOT a category — it's a pinned tool rendered outside the
+// tab system entirely (see buildPalette() in game.js).
+const CATEGORIES = [
+  { id: 'basics',    label: 'Basics',    icon: '🧪' },
+  { id: 'metals',    label: 'Metals',    icon: '⚙️' },
+  { id: 'gases',     label: 'Gases',     icon: '💨' },
+  { id: 'chemistry', label: 'Chemistry', icon: '🧫' },
+  { id: 'electric',  label: 'Electric',  icon: '⚡' },
+  { id: 'weather',   label: 'Weather',   icon: '🌦️' },
+  { id: 'life',      label: 'Life',      icon: '🐛' },
+  { id: 'crafting',  label: 'Crafting',  icon: '🔨' }
+];
 
 // When element `a` touches element `b`:
 //   a becomes `aTo`, b becomes `bTo` (chance = prob, default 1).

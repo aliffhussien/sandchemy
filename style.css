@@ -25,21 +25,69 @@ header h1 { font-size: 2rem; letter-spacing: 0.5px; }
   color: #ffd76b;
 }
 
-main {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+/* Phase 8: three distinct panels (palette / stage / journal) laid out as a
+   grid instead of the old flex-wrap stack, so the sidebar widths stay
+   predictable instead of drifting with content. Collapses to one column
+   on narrow screens — see the media query at the bottom of this section. */
+.game-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 16px;
+  align-items: start;
   justify-content: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Shared card chrome for all three panels — same dark-card language the
+   Journal already used pre-Phase-8, now factored out so the palette and
+   stage panels look like they belong to the same UI instead of one having
+   a card and the others floating free. */
+.panel {
+  background: #14172a;
+  border: 1px solid #2c3252;
+  border-radius: 14px;
+  padding: 18px;
 }
 
 .play-area { display: flex; flex-direction: column; gap: 10px; }
 
-.palette {
+/* Phase 8: palette panel — bounded height so a 50+ element roster reads as
+   a contained, scrollable list rather than an ever-growing wall pushing
+   the canvas further down the page. Tabs + the pinned Erase chip stay put;
+   only the chip list itself scrolls. */
+.palette-panel {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 600px;
+}
+.palette-tabs {
   display: flex;
   flex-wrap: wrap;
+  gap: 4px;
+}
+.palette-tab {
+  background: #1a1e33;
+  border: 1px solid #2c3252;
+  color: #9aa2bd;
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.palette-tab:hover { background: #242a47; color: #fff; }
+.palette-tab.active { border-color: #ffd76b; background: #2a2540; color: #ffd76b; font-weight: bold; }
+
+.palette {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
-  max-width: 720px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0; /* let flexbox actually shrink this to fit, so overflow-y can kick in */
 }
 
 .chip {
@@ -49,20 +97,29 @@ main {
   color: #e8eaf2;
   padding: 10px 16px;
   min-height: 44px;
+  width: 100%;
   display: inline-flex;
   align-items: center;
   font-size: 1rem;
   cursor: pointer;
   transition: transform 0.1s, border-color 0.15s;
   user-select: none;
+  flex-shrink: 0;
 }
 .chip:hover { transform: translateY(-2px); }
 .chip.active { border-color: #ffd76b; background: #2a2540; }
 .chip.new-chip { animation: pop 0.5s ease; }
+.erase-chip { justify-content: center; font-weight: bold; }
 @keyframes pop {
   0% { transform: scale(0.3); }
   60% { transform: scale(1.2); }
   100% { transform: scale(1); }
+}
+
+@media (max-width: 900px) {
+  .game-layout { grid-template-columns: 1fr; }
+  .palette-panel { width: 100%; max-height: 320px; }
+  .journal { width: 100%; }
 }
 
 /* Phase 3: #fx is a second canvas stacked exactly on top of #world, drawn
@@ -198,11 +255,9 @@ canvas {
 
 .hint { color: #6d7492; font-size: 0.85rem; }
 
+/* background/border/radius/padding now come from the shared .panel class
+   (Phase 8) — this rule only needs the Journal-specific sizing. */
 .journal {
-  background: #14172a;
-  border: 1px solid #2c3252;
-  border-radius: 14px;
-  padding: 18px;
   width: 280px;
   min-height: 300px;
 }
