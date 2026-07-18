@@ -285,5 +285,14 @@ Open `index.html` in any browser. That's it.
 
 See **PLAN.md** — the master phased plan to "perfect custom sandbox"
 (chemistry fixes → temperature → visual juice → 2.5D depth → Element Lab →
-sound). One phase per session, in order. Extra ideas for after the plan is
-complete: daily discovery puzzles, rare/secret elements, journal PNG export.
+sound → material textures). One phase per session, in order.
+
+**Next up: Phase 7 — UI polish, keyboard shortcuts, PWA installability, and
+onboarding.** Scoped in full in PLAN.md but not started yet; split into four
+independent sub-phases (7a PWA, 7b shortcuts, 7c UI redesign, 7d onboarding)
+to keep the "one phase per session" rule intact. See PLAN.md's "Phase 7"
+section for the open decisions, file list, and a ready-to-paste kickoff
+prompt for whichever sub-phase comes next.
+
+Extra ideas for after the plan is complete: daily discovery puzzles,
+rare/secret elements, journal PNG export.

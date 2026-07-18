@@ -9,6 +9,27 @@
 > After editing, rsync this folder to the session scratchpad and serve from
 > there (see the `sandchemy` entry pattern in `Documents/.claude/launch.json`).
 
+> **Currently next up: Phase 7 (see below), scoped but not started.** It's
+> deliberately split into four independent sub-phases (7a PWA installability,
+> 7b keyboard shortcuts, 7c UI redesign, 7d onboarding) — pick ONE per
+> session, in that order, per the "one phase = one session" rule. A
+> ready-to-paste kickoff prompt for whichever sub-phase you're starting:
+>
+> ```
+> Read PLAN.md and README.md in this repo (Sandchemy — a falling-sand
+> physics sandbox, plain HTML/CSS/JS, no build step, no server, no
+> framework). I'm picking up Phase 7<a|b|c|d> exactly as scoped in PLAN.md's
+> "Phase 7" section — read that section in full before writing any code,
+> it has the concrete open decisions, file list, and done-when criteria for
+> this specific sub-phase. Ask me anything flagged there as an open decision
+> before you build, rather than guessing. Follow this repo's standing rules:
+> one phase per session, verify live in a browser before calling it done
+> (not just headless), never touch elements.js's content/engine split
+> unnecessarily, and update PLAN.md + README.md with what actually shipped
+> (with today's date) when you're done, the same way every prior phase in
+> PLAN.md is documented.
+> ```
+
 **Vision (Aliff's words):** perfect, 100% custom sandbox. Logically smart —
 reactions should feel real. Visuals so good it feels alive ("3D feel").
 Weekly small updates, never overwhelming, easy to maintain, zero servers,
@@ -1147,6 +1168,169 @@ justifications (where present) as unverified.
 **Status: Done (18 Jul 2026).**
 Added `audio.js` which dynamically synthesizes a fire rumble, sizzle loop, and discovery chime using Web Audio API completely decoupled from `game.js`. Added a Reset Everything and Mute button to the toolbar, and enlarged palette chips for optimal mobile tap-targets. Forced `user-scalable=no`.
 
+## Phase 7 — UI polish, shortcuts, installability & onboarding (SCOPED, NOT STARTED)
+
+**Origin (19 Jul 2026):** Aliff asked for four things in one message: a more
+compact/minimalist UI, game-like keyboard shortcuts, a PWA install prompt on
+every device, and a strong first-run onboarding. Per this project's own
+standing rule #1 (*"One phase = one session = one outcome. Never mix
+phases"*), this is bundled too wide for a single session — it's really 4
+mostly-independent workstreams that touch different files with different
+risk profiles. **This section only scopes the work; nothing below has been
+built yet.** Recommended split, in this order (each is its own session):
+
+- **7a — PWA installability** (lowest risk, purely additive, no existing UI
+  touched)
+- **7b — Keyboard shortcuts** (additive, one new small JS file + a cheatsheet
+  overlay)
+- **7c — UI redesign** (highest risk — touches `index.html`/`style.css`
+  directly, the same file that silently lost 85% of its rules once before,
+  see Phase 5's bug note above; needs the most careful before/after visual
+  verification)
+- **7d — Onboarding** (do last — it should teach the *shipped* 7b shortcuts
+  and 7c layout, not a moving target)
+
+If Aliff wants to collapse two of these into one session anyway, 7a+7b pair
+naturally (both purely additive, zero layout risk). 7c should stay solo.
+
+### 7a. PWA installability
+
+**Goal:** the app can be "installed" (Add to Home Screen / desktop app) on
+Android, iOS, and desktop Chrome/Edge, with a subtle, dismissible, in-app
+floating prompt — not the browser's own inconsistent native banner, since
+iOS Safari never fires `beforeinstallprompt` at all.
+
+- New `manifest.webmanifest` — name, short_name, `display: standalone`,
+  `theme_color`/`background_color` matching the existing dark UI, and an
+  `icons` array.
+- **Open decision, blocks this sub-phase:** there is no real icon artwork in
+  this repo today — the app currently only uses the ⚗️ emoji as its visual
+  identity (see `<h1>⚗️ Sandchemy</h1>` in `index.html`). Two options: (a)
+  render the ⚗️ emoji to PNG at the required sizes as a placeholder (192×192,
+  512×512, plus a maskable variant with safe-area padding, plus a 180×180
+  `apple-touch-icon`), or (b) Aliff supplies real art first. Needs a decision
+  before implementation, not a judgment call to make silently.
+- A minimal service worker (cache the static shell: html/css/js) — required
+  for Chrome/Android's install criteria; iOS install doesn't need one but it
+  doesn't hurt.
+- Custom floating "Install Sandchemy" pill/button: listens for
+  `beforeinstallprompt` on Chrome/Android/desktop (prevents the default
+  banner, shows our own subtle UI instead, calls `.prompt()` on click);
+  on iOS Safari (no such event exists) shows a small "Add to Home Screen via
+  Share → Add to Home Screen" tip instead, since that's the only install path
+  there. Dismissible, and once dismissed stays dismissed (localStorage flag)
+  so it's not nagging.
+- Files: new `manifest.webmanifest`, new `sw.js`, new icon PNGs (or an SVG
+  source + generated sizes), `index.html` (link tags + install button markup
+  + a small inline script), `style.css` (prompt styling).
+- Done when: Chrome DevTools' Lighthouse/Application panel reports the app
+  is installable, the custom prompt appears once per device and stays
+  dismissed after being closed, install actually works on at least one real
+  Android/Chrome device or emulator, and the existing zero-server/zero-leak
+  promise still holds (service worker only caches static assets already
+  shipped in the repo — no new network calls, no analytics).
+
+### 7b. Keyboard shortcuts ("logically smart")
+
+**Goal:** power users can drive the whole toolbar without a mouse, using
+bindings that match existing conventions from games/creative tools rather
+than inventing new ones. Proposed scheme (starting point for the
+implementing session, not final — sanity-check against whatever the browser
+already reserves, e.g. Cmd+W closes the tab):
+
+| Key | Action |
+|---|---|
+| `Space` | Pause / resume |
+| `[` / `]` | Brush size down / up |
+| `Ctrl/Cmd+Z` | Undo |
+| `Ctrl/Cmd+Shift+Z` (or `Ctrl+Y`) | Redo |
+| `1`–`9`, `0` | Quick-select the first 10 palette elements, in palette order |
+| `E` | Toggle Effects |
+| `P` | Toggle Sensor Probe |
+| `L` | Open/close Lab |
+| `M` | Mute/unmute |
+| `Escape` | Close whatever modal is open |
+| `?` | Show/hide a shortcut cheatsheet overlay |
+
+- A cheatsheet overlay (small modal, same visual language as the existing
+  Lab modal) is part of this sub-phase, not optional — shortcuts nobody can
+  discover don't count as onboarding-friendly.
+- Must not fire while a text `<input>`/`<textarea>` inside the Lab modal has
+  focus (e.g. typing "L" into the element-name field shouldn't toggle the
+  Lab).
+- Files: likely a new small `shortcuts.js` (one `keydown` listener, a
+  lookup table, the cheatsheet modal), `index.html` (cheatsheet markup),
+  `style.css`. `game.js`/`effects.js` untouched — shortcuts should just call
+  the same functions the existing buttons already call.
+- Done when: every binding above works, none fire while typing in a form
+  field, `?` toggles a real cheatsheet, and existing mouse/touch controls
+  are completely unchanged (this is additive, not a replacement).
+
+### 7c. UI redesign — compact & minimalist
+
+**Goal:** Aliff's ask was "compact, better structured, minimalist... make
+sure it is like a game" — read as: reduce visual clutter, group the current
+9-button toolbar (Undo/Redo/Probe/Pause/Clear/Effects/Lab/Mute/Reset) into a
+tighter, more game-HUD-like layout rather than a flat row of text-labelled
+buttons, while keeping every existing feature reachable.
+
+**Concrete open decisions this sub-phase needs from Aliff before/while
+building (do not silently invent these):**
+- Icon-only toolbar buttons (relying on `title=` tooltips, already present
+  on every button) vs. keeping some text labels — icon-only is more compact
+  but less discoverable for first-time non-technical users, which cuts
+  against the onboarding goal in 7d.
+- Whether secondary/destructive actions (Reset, Clear) should move into a
+  collapsed "⚙" menu to reduce accidental clicks, versus staying inline.
+  Reset is already a factory-wipe with a confirm dialog — moving it behind
+  one more tap is probably worth it either way.
+- Mobile layout: the journal `<aside>` currently sits beside the play area
+  in a two-column `<main>` — needs an explicit stacked/collapsed treatment
+  on narrow screens if it doesn't already have one (check `style.css` media
+  queries before assuming).
+- This sub-phase's `style.css` edit MUST re-verify the file parses/loads
+  fully afterward (`document.styleSheets[0].cssRules.length` sanity check)
+  — see the Phase 5 bug note above where one unclosed brace silently dropped
+  85% of the stylesheet with zero console error. Compare rule count
+  before/after, don't just eyeball the browser.
+- Files: `index.html`, `style.css` only. No engine or data files touched —
+  same "rendering/layout only" guarantee every prior visual phase kept.
+- Done when: every existing button/control still works exactly as before
+  (functional regression check, not just "looks nicer"), toolbar is
+  visually tighter, `cssRules.length` is sane before and after, live browser
+  screenshot comparison (before/after) shown as proof, and mobile viewport
+  checked, not just desktop.
+
+### 7d. Onboarding
+
+**Goal:** a first-time, non-technical visitor understands what to do within
+seconds, without reading anything. Today the only onboarding is a static
+hint line ("Tip: try pouring water on lava… 👀") — good tone, but easy to
+miss and not sequenced.
+
+**Proposed default** (lightweight, matching the project's own priority order
+of *no leak > easy maintain > fun > fancy* — i.e. don't build a heavy
+tutorial engine for this): a short, dismissible, localStorage-gated
+first-visit sequence — 2–3 tooltip-style callouts pointing at the palette,
+the canvas, and the Discovery Journal in turn ("① pick an element → ② paint
+it here → ③ combos get logged here automatically"), plus surfacing the `?`
+shortcut cheatsheet (from 7b) as the natural "learn more" exit. Should
+compose with 7b/7c rather than duplicate them — no separate help system.
+
+- Files: likely folds into `index.html`/`style.css` plus a small script
+  (either its own file or appended to `lab.js`'s boot sequence). No engine
+  changes.
+- Done when: a fresh browser profile (cleared localStorage) sees the
+  sequence once, dismissing it (or completing it) sets a flag so it never
+  shows again, and it visually matches 7c's finished layout (build this
+  sub-phase last, per the ordering note above).
+
+**Status: SCOPED ONLY, 19 Jul 2026 — no code written for Phase 7 yet.** This
+section exists so a future session (this one or a fresh Cowork session) can
+pick up any of 7a–7d independently with full context, without re-deriving
+the open decisions above from scratch. See the kickoff prompt near the top
+of this file for how to hand this off.
+
 ---
 
 ## Standing rules for every phase
@@ -1224,3 +1408,6 @@ Added `audio.js` which dynamically synthesizes a fire rumble, sizzle loop, and d
   verified, no open items.)
 - [x] Phase 5 — Element Lab + custom worlds + share codes
 - [x] Phase 6 — sound + polish
+- [ ] Phase 7 — UI polish, shortcuts, PWA installability, onboarding —
+  SCOPED 19 Jul 2026, not started. Split into 7a (PWA) / 7b (shortcuts) /
+  7c (UI redesign) / 7d (onboarding); do one at a time, in that order.
