@@ -84,7 +84,7 @@ function toggleMute() {
 window.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('muteBtn');
   if (btn) {
-    btn.innerHTML = isMuted ? '🔇 Unmute' : '🔊 Mute';
+    btn.innerHTML = isMuted ? '🔇' : '🔊'; // Phase 7c: icon-only toolbar; mute logic above is unchanged
     btn.addEventListener('click', toggleMute);
   }
   

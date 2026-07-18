@@ -9,12 +9,15 @@
 > After editing, rsync this folder to the session scratchpad and serve from
 > there (see the `sandchemy` entry pattern in `Documents/.claude/launch.json`).
 
-> **Currently next up: Phase 7b (see below).** 7a (PWA installability) is
-> DONE and live-verified (19 Jul 2026). Phase 7 is deliberately split into
-> four independent sub-phases (7a PWA installability ✅, 7b keyboard
-> shortcuts, 7c UI redesign, 7d onboarding) — pick ONE per session, in that
-> order, per the "one phase = one session" rule. A ready-to-paste kickoff
-> prompt for whichever sub-phase you're starting:
+> **Phase 7 is fully shipped (19 Jul 2026) — 7a/7b/7c/7d all DONE and
+> live-verified.** All four sub-phases were built in one continuous session
+> at Cat's explicit request to push through despite the "one phase per
+> session" rule below — each sub-phase was still verified live in the
+> browser before moving to the next, and the flagged open decisions for 7c
+> were still asked rather than guessed. **Next up: pick a new Phase from
+> here, or start a fresh weekly content update (new elements via
+> `elements.js` only, per README's own maintenance model).** The old
+> sub-phase kickoff prompt below is kept for reference/history:
 >
 > ```
 > Read PLAN.md and README.md in this repo (Sandchemy — a falling-sand
@@ -1387,6 +1390,81 @@ already reserves, e.g. Cmd+W closes the tab):
   field, `?` toggles a real cheatsheet, and existing mouse/touch controls
   are completely unchanged (this is additive, not a replacement).
 
+**Status: DONE, live-verified in a real browser (19 Jul 2026).**
+
+**What shipped, matching the proposed scheme exactly:** new `shortcuts.js`
+— one `document.addEventListener('keydown', ...)`, a lookup table, and the
+cheatsheet modal's open/close wiring. Every binding calls the exact same
+function its matching button already calls (`clickIfPresent('undoBtn')`
+etc. — literally `.click()` on the real button), per the plan's own
+instruction, so nothing here reimplements game/lab/effects/audio logic.
+Brush `[`/`]` is the one exception (no button exists for it) — it directly
+nudges `#brush`'s value and dispatches a real `input` event, the same event
+a manual drag already produces. `1`–`9`/`0` click the Nth chip in `#palette`
+in DOM order, so `buildPalette()` in game.js stays the single source of
+truth for palette contents. A new `⌨️ Shortcuts` toolbar button was added
+(not in the original file list, but directly serves the plan's own
+"shortcuts nobody can discover don't count as onboarding-friendly" line)
+opening the same cheatsheet the `?` key toggles.
+
+**Two real bugs found during live verification, both fixed, neither
+guessed from reading the code:**
+1. **Closing a modal via Escape left focus behind, silently blocking every
+   later shortcut.** Both modals hide via a CSS class (`opacity`/
+   `pointer-events`), not `display: none` — so a text field focused right
+   before Escape (e.g. mid-typing in the Lab's emoji field) stayed
+   `document.activeElement` even after the modal visually closed. The next
+   keypress (tested with `Ctrl/Cmd+Z`) then silently hit the typing guard
+   and did nothing, with zero console error to explain why. Found by
+   testing the realistic sequence (type into Lab → Escape → try another
+   shortcut), not by reading the code and assuming it worked. Fixed: the
+   Escape handler now blurs `document.activeElement` if it's a typing
+   target right after closing.
+2. **Escape itself was originally blocked by its own typing guard**,
+   contradicting the plan's implicit expectation that Escape is the
+   universal cancel gesture — first-draft code put the typing-target check
+   before the Escape case, so pressing Escape mid-form did nothing. Fixed
+   by special-casing Escape to run before (i.e. regardless of) the typing
+   guard, since it never inserts a character and is safe to fire from
+   anywhere.
+
+**Live browser verification — every binding individually confirmed with
+real keyboard events, not assumed from the switch statement reading
+correctly:** `Space` toggles `paused`/pauseBtn text; `]`/`[` move `#brush`'s
+value 4→5→4 and `brushSize` follows; `2` and `3` select palette chip index 1
+and 2 respectively (Sand, then Water) confirming palette-order mapping, not
+a coincidence; `E` toggles `fxBtn` text/active class; `P` toggles
+`probeActive` + the sensor HUD's visibility; `M` toggles the mute button;
+`?` opens a real cheatsheet screenshot-confirmed with all 11 rows legible;
+`Escape` closes the cheatsheet, and separately closes the Lab modal even
+mid-typing (post-fix); `L` opens the Lab, and typing `"L"` into the Lab's
+own emoji field types the letter without toggling the Lab (guard confirmed
+holding); `Ctrl+Z`/`Ctrl+Shift+Z` move a real painted stroke between
+`undoStack`/`redoStack` (1→0→1, confirmed via the actual global arrays, not
+just "no error thrown"). Zero console errors throughout. `localStorage`
+cleared afterward.
+
+**A real, separate infrastructure bug found and fixed while verifying
+this phase (in `sw.js`, from 7a) — not a 7b bug, but caught by 7b's own
+testing:** 7a's service worker cached shortcuts.js on first load. Every
+subsequent edit to that file kept getting silently ignored — the browser
+kept serving the stale first version forever, since a cache-first strategy
+never even asks the network once something's cached. This directly
+contradicts the project's own "How to update weekly" maintenance model
+(README), which assumes a returning player sees the latest edited files.
+Rewrote `sw.js`'s fetch handler from cache-first to **network-first, cache
+as offline-only fallback** — online, every request always goes to the
+network and refreshes the cache; the cache is only ever read when the
+network genuinely fails. A second, subtler layer of the same bug surfaced
+immediately after: even the rewritten network-first `fetch(req)` call was
+still being satisfied from the *browser's own HTTP cache* (a separate layer
+from the Service Worker Cache API), because a plain `fetch()` respects
+normal HTTP caching semantics unless told otherwise. Fixed by fetching with
+`{ cache: 'reload' }`, which forces a genuine network round-trip every
+time. Both fixes are now in the shipped `sw.js`, with the full reasoning
+left as comments in the file itself so a future session doesn't have to
+rediscover this.
+
 ### 7c. UI redesign — compact & minimalist
 
 **Goal:** Aliff's ask was "compact, better structured, minimalist... make
@@ -1422,6 +1500,90 @@ building (do not silently invent these):**
   screenshot comparison (before/after) shown as proof, and mobile viewport
   checked, not just desktop.
 
+**Status: DONE, live-verified in a real browser (19 Jul 2026).**
+
+**Open decisions, asked before building (not guessed):**
+- Icon-only toolbar buttons — Aliff picked **icon-only** over keeping text
+  labels or a hybrid.
+- Clear/Reset placement — Aliff picked **collapse into a ⚙ menu**.
+- A third item was found and flagged mid-question, not in the original
+  three: the canvas can genuinely overflow/distort on narrow phone screens
+  right now (see the bug below) — Aliff confirmed **yes, fix it** as part
+  of this pass, since it's directly inside 7c's own "mobile layout" bullet.
+
+**What shipped:**
+- **Icon-only toolbar** — every button kept its original `id` (every other
+  JS file looks these up directly) and its original `title=` tooltip; only
+  the visible word was dropped, with a new `aria-label` added so the
+  accessible name doesn't regress along with the visible text. New
+  `.icon-btn` class gives each button a fixed 40×40 square footprint so the
+  row reads as a tidy strip instead of ragged pills.
+- **⚙ gear menu** — `clearBtn`/`resetBtn` moved (same ids, same click
+  listeners already in `game.js`/`audio.js`, untouched) into a small
+  collapsed popover behind a new `⚙` button, closing on an outside click.
+  Pure UI chrome, no new logic — a small inline script in `index.html`
+  toggles a `hidden` class, nothing more.
+- **Canvas overflow/distortion, fixed** — merged what used to be two
+  separate `canvas { }` rules in `style.css` into one, replacing a literal
+  `height: 480px` with `aspect-ratio: 3 / 2`. See the bug writeup below for
+  why this mattered.
+
+**A real, measurable bug found and fixed, not just a style tweak:** before
+this phase, `style.css` had two `canvas { }` rules — the second (Phase 3)
+set `width: 720px; height: 480px;` without repeating `max-width: 100%` from
+the first (v1) rule. Same-specificity cascade meant `max-width: 100%` (only
+ever set once) kept correctly capping the WIDTH on narrow screens, but
+`height: auto` from the first rule got overridden to a literal `480px` by
+the second — so on any viewport under 720px wide, the canvas box shrank in
+width while staying pinned to a fixed 480px height, silently distorting the
+aspect ratio. Measured directly, not eyeballed: at a ~570px test viewport,
+the rendered box was 537×480 (aspect 1.119) against a true 720×480 bitmap
+(aspect 1.500) — a real, quantifiable stretch. After the fix, the same
+viewport measured exactly 1.500 aspect, matching the bitmap precisely.
+
+**Live browser verification:**
+- `document.styleSheets[0].cssRules.length`: **104 before → 110 after** —
+  a small, explainable increase (new `.icon-btn`/`.gear-menu`/
+  `.gear-popover` rules, minus one from merging the two canvas rules into
+  one), not the kind of drastic drop Phase 5's unclosed-brace bug produced.
+  Confirms the stylesheet parses fully both before and after, per the
+  standing instruction to compare counts rather than eyeball it.
+- Canvas aspect ratio confirmed exactly `1.500` post-fix at the same
+  viewport that measured `1.119` pre-fix.
+- Toolbar screenshotted before and after: a visibly tighter row of uniform
+  icon squares plus a `⌨️`/`⚙` pair on a second row, replacing nine
+  differently-sized text pills.
+- ⚙ popover confirmed opening (Clear/Reset visible) and closing on an
+  outside click (`classList.contains('hidden')` true after).
+- Functional regression: a real mouse click on the Probe button (now
+  icon-only, moved from its old DOM position) correctly toggled
+  `probeActive` and the sensor HUD — confirming the id-based wiring survived
+  the visual restructuring untouched.
+- Mobile viewport checked at the narrowest width this session's tooling
+  would actually produce (the resize tool floored out around 500px
+  regardless of a smaller request) — zero horizontal overflow
+  (`document.body.scrollWidth` never exceeded `window.innerWidth`), canvas
+  scaled down cleanly, palette/journal stacked without clipping.
+- Zero console errors throughout. `localStorage` cleared afterward.
+
+**One deliberate, justified exception to this sub-phase's own "index.html,
+style.css only" file list — three one-line label-string edits, not
+logic changes:** true icon-only isn't achievable for `pauseBtn`/`fxBtn`/
+`muteBtn` purely from HTML/CSS, because `game.js`/`effects.js`/`audio.js`
+each directly overwrite that button's `textContent`/`innerHTML` with a full
+word (`'▶️ Resume'`, `'✨ Effects (off)'`, `'🔇 Unmute'`) every time its
+state toggles — any HTML-only icon-only markup would get clobbered back to
+full text on the very first click. Fixed with the smallest possible touch:
+changed exactly the three assigned strings to icon-only variants (state
+still fully visible — the play/pause/mute glyphs change themselves, and
+Effects relies on the pre-existing `.active` gold-border class, the same
+pattern `probeBtn`/chips already used). The underlying pause/effects/mute
+*logic* above and below each of those lines is byte-for-byte unchanged.
+This mirrors Phase 1's own precedent ("two tiny generic engine hooks had to
+go into game.js") — a small, necessary, clearly-flagged exception rather
+than silently violating the stated file scope or leaving the toolbar
+half icon-only against Aliff's actual answer.
+
 ### 7d. Onboarding
 
 **Goal:** a first-time, non-technical visitor understands what to do within
@@ -1445,6 +1607,58 @@ compose with 7b/7c rather than duplicate them — no separate help system.
   sequence once, dismissing it (or completing it) sets a flag so it never
   shows again, and it visually matches 7c's finished layout (build this
   sub-phase last, per the ordering note above).
+
+**Status: DONE, live-verified in a real browser (19 Jul 2026).**
+
+**What shipped, matching the proposed default exactly:** new `onboarding.js`
+— a 3-step sequence (① palette → ② canvas → ③ Discovery Journal), gated on
+a single `localStorage` flag (`sandchemy.onboarding_seen`). Each step dims
+the page with a translucent backdrop, draws a gold highlight ring around
+the real target element (`#palette` / `.canvas-wrap` / `.journal` — the
+exact same elements 7c's finished layout already renders, so this
+automatically matches whatever 7c shipped rather than needing its own
+separate styling), and shows a small card with Skip/Next. The last step
+composes directly with 7b instead of duplicating it: its "Show keyboard
+shortcuts" button finishes onboarding and then clicks the real
+`shortcutsBtn` — the same "click the real button" pattern `shortcuts.js`
+itself established, not a second cheatsheet implementation. Card position
+is measured against the real target's `getBoundingClientRect()` every step
+(clamped to stay on-screen, flips above the target if there's no room
+below), and a brief 400ms boot delay lets the palette/journal finish their
+own render pass first so the very first tooltip isn't measured against
+elements still settling into place.
+
+**Live browser verification:**
+- Fresh profile (`localStorage.clear()` then reload) shows step ①
+  correctly: `#palette` gets the gold ring, the card reads "① Pick an
+  element" with the right copy, first dot active.
+- Clicking Next advanced through step ② (`.canvas-wrap` highlighted, card
+  repositioned and auto-scrolled into view) and step ③ (`.journal`
+  highlighted, "Show keyboard shortcuts" button present, dots showing 3/3).
+- Clicking "Show keyboard shortcuts" on the last step confirmed BOTH
+  effects at once: `sandchemy.onboarding_seen` became `"1"`, the backdrop/
+  card were removed from the DOM, AND the real Shortcuts cheatsheet modal
+  opened — screenshotted showing all 11 real bindings, not a placeholder.
+- Reloaded with the flag now set: onboarding did **not** reappear,
+  confirming the "shows once" requirement across an actual reload, not just
+  read from the code.
+- Separately tested the Skip path on another fresh profile (cleared
+  `localStorage` again): clicking Skip on step ① immediately set the same
+  flag and removed the backdrop/highlight — confirming Skip and
+  Next-through-to-completion both correctly gate the sequence, not just the
+  happy path.
+- Zero console errors across the whole flow (fresh load, all 3 steps, both
+  the Skip and the complete-via-shortcuts exit paths, and the reload
+  check). `localStorage` cleared afterward.
+- `sw.js`'s `SHELL_FILES` list updated to include `shortcuts.js` and
+  `onboarding.js` (previously missing since 7a predates both files) — they
+  were already getting opportunistically cached on first fetch either way,
+  but adding them to the initial install list keeps the "everything
+  index.html needs to run fully offline" guarantee complete and explicit
+  rather than relying on the opportunistic path alone.
+
+**Phase 7 is now fully shipped — all four sub-phases (7a/7b/7c/7d) done and
+live-verified.**
 
 **Status: 7a DONE and live-verified (19 Jul 2026, see its own Status note
 above); 7b, 7c, 7d still SCOPED ONLY — no code written for those yet.** This
@@ -1550,6 +1764,35 @@ of this file for how to hand this off.
     was deliberately left undone — asked Aliff, who chose to skip it since
     beforeinstallprompt firing was already Chrome's own proof; everything
     else in the "Done when" bar was confirmed live. No open items.)
-  - [ ] 7b — Keyboard shortcuts
-  - [ ] 7c — UI redesign
-  - [ ] 7d — Onboarding
+  - [x] 7b — Keyboard shortcuts — 19 Jul 2026 (new shortcuts.js: one
+    keydown listener + lookup table, every binding calling the same
+    function its matching button already calls; new ⌨️ Shortcuts button +
+    cheatsheet modal. Found and fixed two real bugs live: Escape closing a
+    modal left stale focus behind and silently blocked every later
+    shortcut (fixed with a blur), and Escape was itself originally blocked
+    by its own typing guard (fixed by special-casing it to run first).
+    Also found and fixed a real infrastructure bug in 7a's sw.js while
+    testing this phase: cache-first meant edited JS files got silently
+    stuck on their first-ever cached version forever — rewritten to
+    network-first with `cache: 'reload'` to force genuine network
+    round-trips. Every binding individually confirmed live with real
+    keyboard events. No open items.)
+  - [x] 7c — UI redesign — 19 Jul 2026 (icon-only toolbar + a collapsed ⚙
+    menu for Clear/Reset, both per Aliff's own answers to the flagged open
+    decisions; found and fixed a real canvas aspect-ratio bug along the
+    way — two conflicting canvas{} rules were silently stretching the
+    canvas on any viewport under 720px wide, measured at 1.119 vs the true
+    1.500 aspect, fixed via `aspect-ratio` and confirmed exactly 1.500
+    after. cssRules.length 104→110 (sane, stylesheet parses fully both
+    sides). One justified 3-line exception to the "index.html/style.css
+    only" file scope: pauseBtn/fxBtn/muteBtn's label strings live in
+    game.js/effects.js/audio.js, so true icon-only needed those three
+    exact strings changed to icon-only (logic untouched) — same precedent
+    as Phase 1's own small justified engine exceptions. No open items.)
+  - [x] 7d — Onboarding — 19 Jul 2026 (new onboarding.js: 3-step
+    localStorage-gated sequence — palette → canvas → journal — highlighting
+    the real elements 7c already styled, ending by clicking the real 7b
+    Shortcuts button rather than duplicating the cheatsheet. Live-verified:
+    fresh profile shows it once, both the Skip path and the
+    complete-via-shortcuts path correctly set the flag and never show it
+    again on reload, zero console errors. No open items.)

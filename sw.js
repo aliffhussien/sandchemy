@@ -22,6 +22,8 @@ const SHELL_FILES = [
   './game.js',
   './effects.js',
   './audio.js',
+  './shortcuts.js',
+  './onboarding.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -48,11 +50,22 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Cache-first for the app shell, falling back to network — and falling
-// back further to whatever's cached for index.html if a navigation request
-// fails entirely offline. Only handles same-origin GET requests; anything
-// else (there shouldn't be anything else — no external requests exist in
-// this app) passes straight through untouched.
+// Network-first for the app shell, falling back to cache only when offline
+// — deliberately NOT cache-first. This was tried first and caught a real
+// bug during Phase 7b verification: cache-first means once a file (e.g.
+// shortcuts.js) is cached, every future edit to that file keeps getting
+// silently ignored forever, because a cache hit never even asks the
+// network. That directly conflicts with this project's actual maintenance
+// model — README's "How to update weekly" section is built entirely
+// around editing elements.js (and, now, other JS files) and expecting
+// players to see the change on their next visit. Network-first fixes that:
+// online, every request goes to the network first and the cache is
+// refreshed with whatever comes back, so a returning player always gets
+// the latest shipped code; only when the network genuinely fails (offline)
+// does it fall back to the last-known-good cached copy, and navigations
+// additionally fall back to the cached index.html shell if even that's
+// missing. Only handles same-origin GET requests; nothing else in this
+// app makes any other kind of request.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) {
@@ -60,21 +73,26 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((res) => {
-          // Opportunistically cache newly-seen same-origin files too, so a
-          // second visit works offline even for anything not in the initial
-          // shell list.
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => {
+    // `fetch(req)` alone still consults the browser's own HTTP cache layer
+    // (separate from the Cache API above) and can silently return a stale
+    // disk-cached response even though this handler intends to always hit
+    // the network — caught during Phase 7c verification when an edited
+    // effects.js/audio.js kept showing OLD behavior in a tab that had
+    // loaded them once before, despite this being a "network-first"
+    // handler. `cache: 'reload'` forces a true network round-trip every
+    // time, which is exactly what "network-first" is supposed to mean.
+    fetch(req, { cache: 'reload' })
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        return res;
+      })
+      .catch(() => {
+        return caches.match(req).then((cached) => {
+          if (cached) return cached;
           if (req.mode === 'navigate') return caches.match('./index.html');
           return undefined;
         });
-    })
+      })
   );
 });

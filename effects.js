@@ -29,7 +29,11 @@ let effectsOn = localStorage.getItem(FX_STORAGE) !== 'off';
 
 const fxBtn = document.getElementById('fxBtn');
 function syncFxBtn() {
-  fxBtn.textContent = effectsOn ? '✨ Effects' : '✨ Effects (off)';
+  // Phase 7c: icon-only toolbar — the on/off word is gone, but the state is
+  // still fully visible via the existing .active class (gold border, the
+  // same pattern probeBtn/chips already use), plus the button's title=
+  // tooltip. Purely a label-string change; the effectsOn logic is untouched.
+  fxBtn.textContent = '✨';
   fxBtn.classList.toggle('active', effectsOn);
 }
 fxBtn.addEventListener('click', () => {

@@ -23,6 +23,54 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Phase 7d — Onboarding (19 Jul 2026)
+
+- First-time visitors now get a short 3-step walkthrough: pick an element
+  from the palette, paint it on the canvas, watch discoveries log
+  automatically in the journal — each step highlights the real element with
+  a gold ring and a small card, Skip anytime.
+- The last step's "Show keyboard shortcuts" button hands off directly to
+  Phase 7b's own cheatsheet instead of building a second help system.
+- Shows once per browser (localStorage-gated) — confirmed live across an
+  actual reload, for both the Skip path and the complete-the-sequence path.
+- New `onboarding.js` only; no engine files touched.
+
+## Phase 7c — UI redesign (19 Jul 2026)
+
+- Toolbar is now icon-only (with tooltips + aria-labels, so nothing lost
+  for accessibility) and noticeably more compact — a tidy row of squares
+  instead of nine differently-sized text buttons.
+- Clear and Reset (the two destructive actions) now live behind a
+  collapsed ⚙ menu instead of sitting inline, cutting down on accidental
+  clicks.
+- Found and fixed a real bug along the way: the canvas could silently
+  distort on phone-width screens (two old CSS rules fighting each other
+  meant the box shrank in width but stayed pinned to a fixed height) —
+  confirmed via actual measured aspect ratio before (1.119, wrong) and
+  after (1.500, correct) the fix.
+- `index.html`/`style.css` only, plus three tiny one-line label-string
+  tweaks in game.js/effects.js/audio.js (their pause/effects/mute *logic*
+  is untouched — see PLAN.md for why those three lines specifically had to
+  change for icon-only to actually work).
+
+## Phase 7b — Keyboard shortcuts (19 Jul 2026)
+
+- Full keyboard control: Space to pause, `[`/`]` for brush size, Ctrl/Cmd+Z
+  to undo, Ctrl/Cmd+Shift+Z (or Ctrl+Y) to redo, 1-9/0 to quick-pick
+  palette elements, E/P/L/M to toggle Effects/Probe/Lab/Mute, Esc to close
+  modals, and `?` (or the new ⌨️ Shortcuts button) for a full cheatsheet.
+- Every shortcut calls the exact same function its matching button already
+  calls — nothing reimplemented, so if a button's behavior ever changes the
+  shortcut inherits it automatically.
+- Found and fixed two real bugs live: closing a modal with Escape used to
+  leave a text field silently focused, blocking every shortcut afterward;
+  and Escape was originally blocked by its own "don't fire while typing"
+  guard. Also found and fixed a real service-worker bug from Phase 7a while
+  testing this one — cache-first meant edited files could get stuck on
+  their very first cached version forever, contradicting this project's own
+  weekly-update model; rewritten to network-first.
+- New `shortcuts.js` only; `game.js`/`effects.js` untouched.
+
 ## Phase 7a — PWA installability (19 Jul 2026)
 
 - Sandchemy can now be "installed" (Add to Home Screen / desktop app) on
@@ -50,7 +98,6 @@ Open `index.html` in any browser. That's it.
   asked and chose not to add a placeholder-icon app to his Mac just to
   prove it further, since Chrome approving the install prompt was already
   definitive. Full detail in PLAN.md's Phase 7a section.
-- **Next up: Phase 7b — keyboard shortcuts.**
 
 ## Phase 4.6 — Material textures (19 Jul 2026)
 
@@ -316,12 +363,12 @@ See **PLAN.md** — the master phased plan to "perfect custom sandbox"
 (chemistry fixes → temperature → visual juice → 2.5D depth → Element Lab →
 sound → material textures). One phase per session, in order.
 
-**Next up: Phase 7b — keyboard shortcuts.** Phase 7a (PWA installability) is
-done — see the changelog entry above. Phase 7 is split into four
-independent sub-phases (7a PWA ✅, 7b shortcuts, 7c UI redesign, 7d
-onboarding) to keep the "one phase per session" rule intact. See PLAN.md's
-"Phase 7" section for the remaining open decisions, file list, and a
-ready-to-paste kickoff prompt for whichever sub-phase comes next.
+**Phase 7 is fully shipped** — all four sub-phases (7a PWA installability,
+7b keyboard shortcuts, 7c UI redesign, 7d onboarding) are done and
+live-verified; see the changelog entries above and PLAN.md's Phase 7
+section for full detail. Next up: pick a new phase, or fold in a weekly
+content-only update (new elements via `elements.js` only, per this file's
+own maintenance model above).
 
 Extra ideas for after the plan is complete: daily discovery puzzles,
 rare/secret elements, journal PNG export.

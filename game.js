@@ -248,7 +248,12 @@ document.getElementById('probeBtn').addEventListener('click', e => {
 let paused = false;
 document.getElementById('pauseBtn').addEventListener('click', e => {
   paused = !paused;
-  e.target.textContent = paused ? '▶️ Resume' : '⏸ Pause';
+  // Phase 7c: icon-only toolbar per Aliff's own call — the play/pause glyph
+  // itself already communicates state, same as the browser's own media
+  // controls, so the word is dropped but the underlying pause/resume LOGIC
+  // above this line is completely untouched (this is a label-string change,
+  // not an engine change).
+  e.target.textContent = paused ? '▶️' : '⏸';
 });
 document.getElementById('undoBtn').addEventListener('click', () => {
   if (!undoStack.length) return;

@@ -40,19 +40,34 @@
         <canvas id="world" width="720" height="480"></canvas>
         <canvas id="fx"></canvas>
       </div>
+      <!-- Phase 7c: compact, icon-only HUD-style toolbar (per Aliff's own
+           call on the 7a/7b follow-up questions). Every button keeps its
+           original id (game.js/effects.js/lab.js/audio.js/shortcuts.js all
+           look these up directly) and its original title= tooltip; only the
+           visible word is dropped, with aria-label added so the accessible
+           name doesn't regress just because the visible text did. Clear and
+           Reset (the two destructive actions) moved into a collapsed ⚙ menu
+           to cut down on accidental clicks in the always-visible row. -->
       <div class="toolbar">
-        <label class="brush-label">Brush
-          <input type="range" id="brush" min="1" max="10" value="4">
+        <label class="brush-label" title="Brush size">🖌️
+          <input type="range" id="brush" min="1" max="10" value="4" aria-label="Brush size">
         </label>
-        <button id="undoBtn" title="Undo last brush stroke">↩️ Undo</button>
-        <button id="redoBtn" title="Redo brush stroke">↪️ Redo</button>
-        <button id="probeBtn" title="Toggle Sensor Probe">🔍 Probe</button>
-        <button id="pauseBtn" title="Pause / resume the simulation">⏸ Pause</button>
-        <button id="clearBtn" title="Clear the whole sandbox">🧹 Clear</button>
-        <button id="fxBtn" title="Toggle glow/particles/shimmer — also an fps escape hatch if things feel slow">✨ Effects</button>
-        <button id="labBtn" title="Create custom elements and manage worlds">🧪 Lab</button>
-        <button id="muteBtn" title="Mute/Unmute sound">🔊 Mute</button>
-        <button id="resetBtn" title="Factory reset all data">⚠️ Reset</button>
+        <button id="undoBtn" class="icon-btn" title="Undo last brush stroke" aria-label="Undo">↩️</button>
+        <button id="redoBtn" class="icon-btn" title="Redo brush stroke" aria-label="Redo">↪️</button>
+        <button id="probeBtn" class="icon-btn" title="Toggle Sensor Probe" aria-label="Toggle Sensor Probe">🔍</button>
+        <button id="pauseBtn" class="icon-btn" title="Pause / resume the simulation" aria-label="Pause or resume">⏸</button>
+        <button id="fxBtn" class="icon-btn" title="Toggle glow/particles/shimmer — also an fps escape hatch if things feel slow" aria-label="Toggle Effects">✨</button>
+        <button id="labBtn" class="icon-btn" title="Create custom elements and manage worlds" aria-label="Open Element Lab">🧪</button>
+        <button id="muteBtn" class="icon-btn" title="Mute/Unmute sound" aria-label="Mute or unmute sound">🔊</button>
+        <button id="shortcutsBtn" class="icon-btn" title="Keyboard shortcuts (press ?)" aria-label="Show keyboard shortcuts">⌨️</button>
+
+        <div class="gear-menu">
+          <button id="gearBtn" class="icon-btn" title="More options" aria-label="More options" aria-haspopup="true">⚙️</button>
+          <div id="gearPopover" class="gear-popover hidden">
+            <button id="clearBtn" title="Clear the whole sandbox">🧹 Clear</button>
+            <button id="resetBtn" title="Factory reset all data">⚠️ Reset</button>
+          </div>
+        </div>
       </div>
       <div class="hint">Tip: try pouring <b>water</b> on <b>lava</b>… 👀</div>
       
@@ -175,6 +190,32 @@
     </div>
   </div>
 
+  <!-- Phase 7b: keyboard shortcut cheatsheet. Same modal visual language as
+       #labModal (reuses .modal/.modal-content/.modal-header/.close-btn) but
+       its own simple id so shortcuts.js can toggle it independently of the
+       Lab modal. -->
+  <div id="shortcutsModal" class="modal hidden">
+    <div class="modal-content shortcuts-content">
+      <div class="modal-header">
+        <h2>⌨️ Keyboard Shortcuts</h2>
+        <button id="closeShortcutsBtn" class="close-btn">×</button>
+      </div>
+      <div class="shortcuts-list">
+        <div class="shortcut-row"><kbd>Space</kbd><span>Pause / resume</span></div>
+        <div class="shortcut-row"><kbd>[</kbd> <kbd>]</kbd><span>Brush size down / up</span></div>
+        <div class="shortcut-row"><kbd>Ctrl/Cmd</kbd>+<kbd>Z</kbd><span>Undo</span></div>
+        <div class="shortcut-row"><kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> or <kbd>Ctrl</kbd>+<kbd>Y</kbd><span>Redo</span></div>
+        <div class="shortcut-row"><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd><span>Quick-select the first 10 palette elements</span></div>
+        <div class="shortcut-row"><kbd>E</kbd><span>Toggle Effects</span></div>
+        <div class="shortcut-row"><kbd>P</kbd><span>Toggle Sensor Probe</span></div>
+        <div class="shortcut-row"><kbd>L</kbd><span>Open / close Lab</span></div>
+        <div class="shortcut-row"><kbd>M</kbd><span>Mute / unmute</span></div>
+        <div class="shortcut-row"><kbd>Esc</kbd><span>Close whatever modal is open</span></div>
+        <div class="shortcut-row"><kbd>?</kbd><span>Show / hide this cheatsheet</span></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <!-- Phase 7a: floating, dismissible install prompt. Hidden by default;
@@ -195,6 +236,35 @@
   <script src="game.js"></script>
   <script src="effects.js"></script>
   <script src="audio.js"></script>
+  <script src="shortcuts.js"></script>
+  <script src="onboarding.js"></script>
+
+  <script>
+    // Phase 7c: the ⚙ popover holding Clear/Reset. Pure UI chrome — toggles
+    // a hidden class, closes on an outside click. Doesn't call any new
+    // logic; clearBtn/resetBtn keep their original ids and their original
+    // click listeners (still wired in game.js/audio.js), only their
+    // position in the DOM/visual layout changed.
+    (function () {
+      const gearBtn = document.getElementById('gearBtn');
+      const popover = document.getElementById('gearPopover');
+      gearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popover.classList.toggle('hidden');
+      });
+      document.addEventListener('click', (e) => {
+        if (!popover.classList.contains('hidden') && !popover.contains(e.target) && e.target !== gearBtn) {
+          popover.classList.add('hidden');
+        }
+      });
+      // Closing the popover after Clear/Reset is clicked is a nice touch,
+      // not strictly required (Reset reloads the page anyway; Clear leaves
+      // it open otherwise) — cheap enough to just always do it.
+      popover.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') popover.classList.add('hidden');
+      });
+    })();
+  </script>
 
   <script>
     // Phase 7a — PWA installability. Deliberately kept out of game.js/

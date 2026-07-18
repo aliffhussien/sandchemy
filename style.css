@@ -65,23 +65,27 @@ main {
   100% { transform: scale(1); }
 }
 
-canvas {
-  border-radius: 12px;
-  border: 1px solid #2c3252;
-  cursor: crosshair;
-  touch-action: none;
-  max-width: 100%;
-  height: auto;
-}
 /* Phase 3: #fx is a second canvas stacked exactly on top of #world, drawn
    by effects.js only (glow/particles/shimmer) — the sim canvas underneath
    is completely untouched by any of it. */
 .canvas-wrap { position: relative; display: inline-block; max-width: 100%; }
-canvas { 
-  display: block; 
-  image-rendering: pixelated; 
-  width: 720px; 
-  height: 480px; 
+/* Phase 7c fix: this used to be two separate `canvas { }` rules — the
+   second one set a literal `height: 480px`, which won permanently over the
+   first rule's `height: auto` (later same-specificity rule wins) while
+   `max-width: 100%` from the first rule kept capping the WIDTH on narrow
+   screens. Net effect: on any viewport under 720px wide the canvas's box
+   was shrunk in width but pinned to a fixed 480px height, silently
+   distorting the aspect ratio (measured 537×480 → 1.119 instead of the
+   real 720×480 → 1.500 on a ~570px-wide test viewport). Merged into one
+   rule using `aspect-ratio` instead of a fixed height, so whatever width
+   the box ends up at (up to 720px, capped by max-width: 100% below), the
+   height always follows proportionally. */
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  width: 720px;
+  max-width: 100%;
+  aspect-ratio: 3 / 2; /* 720 / 480, kept as a ratio instead of a fixed height */
   border-radius: 12px;
   border: 1px solid #2c3252;
   cursor: crosshair;
@@ -141,6 +145,56 @@ canvas {
   font-size: 0.85rem;
   color: #9aa2bd;
 }
+
+/* Phase 7c: compact icon-only HUD buttons — fixed square footprint so a
+   row of them reads as a tidy button strip instead of ragged text pills.
+   Same background/border/active language as the old .toolbar button rule,
+   just tighter padding and a bigger glyph since there's no word to balance
+   against anymore. */
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Phase 7c: the ⚙ menu holding Clear/Reset — collapsed by default so the
+   two destructive actions need a deliberate extra tap, cutting down on
+   accidental clicks in the always-visible row. */
+.gear-menu { position: relative; display: inline-flex; }
+.gear-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #14172a;
+  border: 1px solid #2c3252;
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+.gear-popover.hidden { display: none; }
+.gear-popover button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #e8eaf2;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.gear-popover button:hover { background: #1a1e33; }
+#resetBtn:hover { color: #ff4d4d; }
 
 .hint { color: #6d7492; font-size: 0.85rem; }
 
@@ -331,6 +385,57 @@ canvas {
     max-width: none;
   }
 }
+
+/* Phase 7b: keyboard shortcut cheatsheet */
+.shortcuts-content { max-width: 480px; }
+.shortcuts-list { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.shortcut-row {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 10px; border-bottom: 1px solid #2c3252;
+  font-size: 0.9rem;
+}
+.shortcut-row:last-child { border-bottom: none; padding-bottom: 0; }
+.shortcut-row span { margin-left: auto; color: #e8eaf2; text-align: right; }
+kbd {
+  background: #0d0f1a; border: 1px solid #2c3252; border-bottom-width: 2px;
+  border-radius: 5px; padding: 3px 7px; font-size: 0.8rem; font-family: monospace;
+  color: #ffd76b;
+}
+
+/* Phase 7d: first-run onboarding. A dim full-page backdrop, a highlight
+   ring around whatever element the current step points at, and a small
+   card near it — same dark-card/gold-accent visual language as every
+   other overlay in this app (.toast, .modal-content, .install-prompt). */
+#onboardingBackdrop {
+  position: fixed; inset: 0;
+  background: rgba(13, 15, 26, 0.72);
+  z-index: 200;
+}
+.onboarding-highlight {
+  position: relative;
+  z-index: 201;
+  box-shadow: 0 0 0 3px #ffd76b, 0 0 24px rgba(255, 215, 107, 0.5);
+  border-radius: 10px;
+}
+#onboardingCard {
+  position: absolute;
+  z-index: 202;
+  background: #14172a;
+  border: 1px solid #ffd76b;
+  border-radius: 12px;
+  padding: 16px;
+  width: 280px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.onboarding-title { font-weight: bold; color: #ffd76b; margin-bottom: 6px; font-size: 1rem; }
+.onboarding-body { font-size: 0.88rem; color: #e8eaf2; line-height: 1.4; margin-bottom: 12px; }
+#onboardingCard .small-btn { display: block; width: 100%; margin-bottom: 10px; }
+.onboarding-footer { display: flex; align-items: center; justify-content: space-between; }
+.onboarding-dots { display: flex; gap: 5px; }
+.onboarding-dots .dot { width: 6px; height: 6px; border-radius: 50%; background: #2c3252; }
+.onboarding-dots .dot.active { background: #ffd76b; }
+.onboarding-actions { display: flex; gap: 8px; }
+.onboarding-actions .small-btn { width: auto; margin-bottom: 0; }
 
 /* Scenarios */
 .scenarios-container { padding: 20px; text-align: center; }
