@@ -13,7 +13,17 @@
   <meta property="og:url" content="https://sandchemy.com/">
   <meta property="og:title" content="Sandchemy - Professional Virtual Physics Laboratory">
   <meta property="og:description" content="A pixel-perfect educational sandbox for exploring advanced thermodynamics, chemistry, and biology.">
-  
+
+  <!-- Phase 7a: PWA installability. theme_color/background_color mirror
+       style.css's own #0d0f1a; icons are the same set the manifest lists. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0d0f1a">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sandchemy">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -167,10 +177,105 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <!-- Phase 7a: floating, dismissible install prompt. Hidden by default;
+       shown only if install is actually available and not previously
+       dismissed (see the inline script below). Two variants share one
+       element: Chrome/Android/desktop gets a real "Install" button wired to
+       beforeinstallprompt; iOS Safari (which never fires that event) gets a
+       manual "Share → Add to Home Screen" tip instead. -->
+  <div id="installPrompt" class="install-prompt hidden">
+    <span id="installPromptIcon">📲</span>
+    <span id="installPromptText">Install Sandchemy for quick access</span>
+    <button id="installActionBtn" class="small-btn hidden">Install</button>
+    <button id="installDismissBtn" class="close-btn" title="Dismiss">×</button>
+  </div>
+
   <script src="elements.js"></script>
   <script src="lab.js"></script>
   <script src="game.js"></script>
   <script src="effects.js"></script>
   <script src="audio.js"></script>
+
+  <script>
+    // Phase 7a — PWA installability. Deliberately kept out of game.js/
+    // effects.js/lab.js: this is pure install-affordance chrome, has zero
+    // interaction with the simulation, and every guard below is a no-op if
+    // something's unsupported (older browsers just never see the pill).
+    (function () {
+      var DISMISS_KEY = 'sandchemy.pwa_install_dismissed';
+      var promptEl = document.getElementById('installPrompt');
+      var textEl = document.getElementById('installPromptText');
+      var actionBtn = document.getElementById('installActionBtn');
+      var dismissBtn = document.getElementById('installDismissBtn');
+      var deferredPrompt = null;
+
+      function alreadyInstalled() {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               window.navigator.standalone === true; // iOS home-screen launch
+      }
+
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      }
+
+      function dismissed() {
+        try { return localStorage.getItem(DISMISS_KEY) === '1'; }
+        catch (e) { return false; }
+      }
+
+      function setDismissed() {
+        try { localStorage.setItem(DISMISS_KEY, '1'); } catch (e) { /* ignore */ }
+        promptEl.classList.add('hidden');
+      }
+
+      function showPrompt() {
+        if (alreadyInstalled() || dismissed()) return;
+        promptEl.classList.remove('hidden');
+      }
+
+      dismissBtn.addEventListener('click', setDismissed);
+
+      if (isIOS()) {
+        // iOS Safari never fires beforeinstallprompt and has no
+        // programmatic install API — the only path is the manual Share
+        // sheet, so the pill just teaches that instead of offering a button.
+        textEl.textContent = 'Install: tap Share, then "Add to Home Screen"';
+        actionBtn.classList.add('hidden');
+        if (!alreadyInstalled() && !dismissed()) showPrompt();
+      } else {
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault(); // suppress the browser's own inconsistent banner
+          deferredPrompt = e;
+          actionBtn.classList.remove('hidden');
+          showPrompt();
+        });
+
+        actionBtn.addEventListener('click', function () {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.finally(function () {
+            deferredPrompt = null;
+            promptEl.classList.add('hidden');
+          });
+        });
+
+        window.addEventListener('appinstalled', function () {
+          promptEl.classList.add('hidden');
+        });
+      }
+
+      // Minimal service worker registration — caches the static shell only
+      // (see sw.js). Required for Chrome/Android's install criteria; wrapped
+      // in a feature check so it's a silent no-op anywhere unsupported, and
+      // a failure here never blocks the sandbox itself from working.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js').catch(function (err) {
+            console.warn('Sandchemy: service worker registration failed', err);
+          });
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

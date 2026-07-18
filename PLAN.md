@@ -9,11 +9,12 @@
 > After editing, rsync this folder to the session scratchpad and serve from
 > there (see the `sandchemy` entry pattern in `Documents/.claude/launch.json`).
 
-> **Currently next up: Phase 7 (see below), scoped but not started.** It's
-> deliberately split into four independent sub-phases (7a PWA installability,
-> 7b keyboard shortcuts, 7c UI redesign, 7d onboarding) — pick ONE per
-> session, in that order, per the "one phase = one session" rule. A
-> ready-to-paste kickoff prompt for whichever sub-phase you're starting:
+> **Currently next up: Phase 7b (see below).** 7a (PWA installability) is
+> DONE and live-verified (19 Jul 2026). Phase 7 is deliberately split into
+> four independent sub-phases (7a PWA installability ✅, 7b keyboard
+> shortcuts, 7c UI redesign, 7d onboarding) — pick ONE per session, in that
+> order, per the "one phase = one session" rule. A ready-to-paste kickoff
+> prompt for whichever sub-phase you're starting:
 >
 > ```
 > Read PLAN.md and README.md in this repo (Sandchemy — a falling-sand
@@ -1230,6 +1231,126 @@ iOS Safari never fires `beforeinstallprompt` at all.
   promise still holds (service worker only caches static assets already
   shipped in the repo — no new network calls, no analytics).
 
+**Status: DONE, live-verified in a real browser (19 Jul 2026).**
+
+**Icon decision (asked, not guessed):** Aliff was asked how to source the
+missing icon artwork (render the ⚗️ emoji vs. supply real art first) and,
+after a follow-up, asked for a **Phosphor `flask` icon** instead of either
+original option — a proper vector glyph rather than an emoji screenshot.
+Went with that: pulled the real SVG from the `@phosphor-icons/core` npm
+package (`assets/fill/flask-fill.svg`), recolored it to the app's existing
+gold accent (`#ffd76b`), and rasterized it with ImageMagick onto a rounded
+dark-navy card matching `style.css`'s own background gradient
+(`#14172a` → `#0d0f1a`) — same visual language as the rest of the app, not
+a generic placeholder. `generate_icons.py` (new, one-off dev script, same
+category as the existing `generate_volcano.js`/`generate_scenarios.js` —
+not loaded by `index.html`, kept only so icons can be regenerated later if
+the theme colors ever change) produces all four required sizes into a new
+`icons/` folder: `icon-192.png`, `icon-512.png` (both content-filled at
+62%, rounded corners), `icon-512-maskable.png` (content shrunk to 42% and
+un-rounded, so it survives Android's aggressive circular/squircle safe-zone
+cropping per the maskable-icon spec), and `apple-touch-icon.png` (180×180,
+opaque, un-rounded — iOS applies its own corner rounding and doesn't
+respect transparency).
+
+**What shipped, matching every bullet above:**
+- `manifest.webmanifest` — name/short_name "Sandchemy", `display:
+  standalone`, `background_color`/`theme_color` both `#0d0f1a` (matching
+  `body`'s existing background in `style.css` exactly), `start_url`/`scope`
+  both relative (`./`) so it works regardless of what path the app is
+  hosted under, and the three icons above (`any` purpose for the two plain
+  ones, `maskable` for the third).
+- `sw.js` — a minimal, deliberately narrow service worker. Caches exactly
+  the static shell `index.html` needs to run fully offline
+  (`style.css`, `elements.js`, `lab.js`, `game.js`, `effects.js`, `audio.js`,
+  the manifest, all four icons) on install, cleans up any old-versioned
+  cache on activate, and serves cache-first with a network fallback that
+  also opportunistically caches anything not in the original shell list.
+  Deliberately does NOT cache `about.html`/`privacy-policy.html` (secondary
+  pages, not part of the play loop) or the `generate_*.js` dev scripts (not
+  loaded by `index.html` at runtime). Zero new network calls, zero
+  third-party requests, zero analytics — only ever touches files already
+  shipped in this repo, so the zero-server/zero-leak promise holds exactly
+  as it did before.
+- `index.html` — added the manifest link, `theme-color` meta, favicon,
+  apple-touch-icon, and the `apple-mobile-web-app-*` meta tags iOS reads.
+  Added a floating `#installPrompt` pill (hidden by default) plus a small
+  inline script (not a new file — kept this self-contained rather than
+  adding a 6th `<script src>` for ~70 lines of install-affordance chrome)
+  that: listens for `beforeinstallprompt` on Chrome/Android/desktop,
+  `preventDefault()`s the browser's own inconsistent native banner, shows
+  our pill with a real "Install" button wired to `.prompt()`; on iOS Safari
+  (detected via UA sniffing since `beforeinstallprompt` never fires there)
+  swaps the pill's text to a manual "tap Share → Add to Home Screen" tip and
+  hides the button entirely, since that's the only install path iOS has;
+  and registers `sw.js` behind a `'serviceWorker' in navigator` feature
+  check so it's a silent no-op anywhere unsupported. Dismissing the pill (×
+  button) sets a `localStorage` flag (`sandchemy.pwa_install_dismissed`) so
+  it never shows again on that device — confirmed by direct test, not
+  assumed.
+- `style.css` — new `.install-prompt` rules: a dark card with a gold border
+  (same `#14172a`/`#ffd76b` language as `.toast`), fixed to the bottom-right
+  corner rather than top-center (persistent chrome, not a transient
+  notification), with a narrow-viewport media query that stretches it
+  edge-to-edge on mobile instead of clipping.
+- **Engine untouched** — `elements.js` and `game.js` were not opened for
+  editing at all this session; this is pure add-on chrome, the same
+  "rendering/layout only, engine never touched" guarantee every prior
+  Phase 3/4/4.6 visual phase kept.
+
+**A real environment gotcha worth recording, not a game bug:** this
+session's sandboxed tool environment could run a local static file server,
+but that sandbox's network is isolated from Aliff's actual Mac — the real
+connected Chrome browser couldn't reach `localhost` inside the sandbox, and
+`file://` URLs were blocked outright by the browser extension's own safety
+rules. Neither gap was something to route around from inside the sandbox
+(no way to start a server on Aliff's actual machine without terminal access,
+which was itself restricted to click-only, no typing). Resolved simply: **Aliff
+ran `python3 -m http.server 8721` from the project folder on his own Mac**,
+after which the already-connected real Chrome could reach
+`http://localhost:8721` normally. Worth remembering for any future session
+hitting the same wall — the fix is a one-line ask, not a workaround.
+
+**Live browser verification — DONE (19 Jul 2026):**
+- Manifest fetched and parsed directly (`fetch(manifestLink).json()`):
+  valid JSON, correct `name`/`display: standalone`/`theme_color`, and all
+  three icon entries present with the right `purpose` values.
+- Service worker confirmed actually registered and active
+  (`navigator.serviceWorker.getRegistrations()` → 1 registration, `active`
+  truthy, scope `http://localhost:8721/`) — not just present in source.
+- Cache contents read directly via the Cache API: all expected shell files
+  present (`index.html`, `style.css`, all 5 JS files, the manifest, all 4
+  icon PNGs) — genuine proof the install/cache step actually ran, not
+  inferred from no errors.
+- **Chrome's own install-eligibility engine approved the site for real**:
+  `beforeinstallprompt` fired unprompted on load and our custom pill
+  appeared ("📲 Install Sandchemy for quick access" with a working Install
+  button) — this is Chrome's live installability check passing, a stronger
+  signal than a static Lighthouse audit would have been.
+- Dismiss button confirmed working: pill hides immediately, `localStorage`
+  flag (`sandchemy.pwa_install_dismissed`) set to `"1"`; reloaded the page
+  fresh afterward and confirmed the pill correctly stayed hidden — the
+  "stays dismissed" requirement verified across an actual reload, not
+  assumed from reading the code.
+- Existing functionality reconfirmed unaffected: dispatched a real
+  pointer down/move/up sequence on the `#world` canvas (paints normally,
+  `grid` still globally reachable and populated, zero errors thrown) and
+  the palette/journal/toolbar all rendered pixel-identical to before this
+  phase.
+- Zero console errors at any point across two full fresh loads (only the
+  expected "Audio Engine Initialized" log). Sandbox `localStorage` cleared
+  afterward to leave a clean slate.
+- **A real install was deliberately NOT performed** — asked Aliff directly
+  whether to click through an actual OS-level install (which would add a
+  real, permanent Sandchemy app with the placeholder flask icon to his
+  Mac), and he chose to skip it since `beforeinstallprompt` firing was
+  already Chrome's own definitive proof of installability. Flagging this
+  explicitly as a deliberate scope choice, not a gap — everything the
+  "Done when" bar asks for was otherwise confirmed live, and this is the
+  one checkbox (a literal completed install) intentionally left for Aliff
+  to do himself whenever he actually wants the app on his machine.
+- **7a has no open items left.**
+
 ### 7b. Keyboard shortcuts ("logically smart")
 
 **Goal:** power users can drive the whole toolbar without a mouse, using
@@ -1409,5 +1530,21 @@ of this file for how to hand this off.
 - [x] Phase 5 — Element Lab + custom worlds + share codes
 - [x] Phase 6 — sound + polish
 - [ ] Phase 7 — UI polish, shortcuts, PWA installability, onboarding —
-  SCOPED 19 Jul 2026, not started. Split into 7a (PWA) / 7b (shortcuts) /
-  7c (UI redesign) / 7d (onboarding); do one at a time, in that order.
+  SCOPED 19 Jul 2026. Split into 7a (PWA) / 7b (shortcuts) / 7c (UI
+  redesign) / 7d (onboarding); do one at a time, in that order.
+  - [x] 7a — PWA installability — 19 Jul 2026 (manifest.webmanifest, a
+    minimal shell-caching sw.js, a Phosphor-flask icon set generated to
+    match the app's own dark/gold theme, and a dismissible floating install
+    pill that handles both the Chrome/Android beforeinstallprompt flow and
+    iOS Safari's manual "Add to Home Screen" path. elements.js/game.js
+    untouched. Live-verified in a real browser: manifest parses correctly,
+    service worker registered+active+caching the exact shell files,
+    Chrome's own beforeinstallprompt fired confirming real installability,
+    dismiss-and-stays-dismissed confirmed across an actual reload, existing
+    paint/sim/UI unaffected, zero console errors. An actual OS-level install
+    was deliberately left undone — asked Aliff, who chose to skip it since
+    beforeinstallprompt firing was already Chrome's own proof; everything
+    else in the "Done when" bar was confirmed live. No open items.)
+  - [ ] 7b — Keyboard shortcuts
+  - [ ] 7c — UI redesign
+  - [ ] 7d — Onboarding

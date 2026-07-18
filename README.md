@@ -23,6 +23,35 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Phase 7a — PWA installability (19 Jul 2026)
+
+- Sandchemy can now be "installed" (Add to Home Screen / desktop app) on
+  Chrome/Android/desktop, with a subtle floating "📲 Install Sandchemy" pill
+  instead of the browser's own inconsistent native banner. Dismissing it
+  (×) sticks — it won't nag again on that device.
+- iOS Safari never fires the install event real browsers use, so it gets a
+  different message instead: a plain "tap Share → Add to Home Screen" tip.
+- New `manifest.webmanifest` + a minimal `sw.js` that caches just the static
+  app shell (html/css/js/icons already shipped in this repo — no new
+  network calls, no analytics, same zero-leak promise as always).
+- New app icon: a gold Phosphor "flask" glyph on the app's own dark navy
+  background, at every size Android/iOS/desktop need (192, 512, a maskable
+  512 for Android's safe-zone cropping, and a 180 apple-touch-icon).
+  Replaces "no real icon, just the ⚗️ emoji" with actual generated artwork.
+- `elements.js`/`game.js` untouched — this is pure add-on chrome, same
+  "engine never touched" guarantee every visual-only phase has kept.
+- Live-verified in a real browser: manifest parses correctly, service
+  worker registered and actively caching the right files, and — the
+  strongest possible signal — Chrome's own installability check approved
+  the site for real (`beforeinstallprompt` fired on load). Dismiss-and-
+  stays-dismissed confirmed across an actual reload. Existing paint/sim/UI
+  confirmed unaffected, zero console errors.
+- A real OS-level install was deliberately skipped by request — Aliff was
+  asked and chose not to add a placeholder-icon app to his Mac just to
+  prove it further, since Chrome approving the install prompt was already
+  definitive. Full detail in PLAN.md's Phase 7a section.
+- **Next up: Phase 7b — keyboard shortcuts.**
+
 ## Phase 4.6 — Material textures (19 Jul 2026)
 
 - **Every solid material finally looks like what it is.** Wall now shows a
@@ -287,12 +316,12 @@ See **PLAN.md** — the master phased plan to "perfect custom sandbox"
 (chemistry fixes → temperature → visual juice → 2.5D depth → Element Lab →
 sound → material textures). One phase per session, in order.
 
-**Next up: Phase 7 — UI polish, keyboard shortcuts, PWA installability, and
-onboarding.** Scoped in full in PLAN.md but not started yet; split into four
-independent sub-phases (7a PWA, 7b shortcuts, 7c UI redesign, 7d onboarding)
-to keep the "one phase per session" rule intact. See PLAN.md's "Phase 7"
-section for the open decisions, file list, and a ready-to-paste kickoff
-prompt for whichever sub-phase comes next.
+**Next up: Phase 7b — keyboard shortcuts.** Phase 7a (PWA installability) is
+done — see the changelog entry above. Phase 7 is split into four
+independent sub-phases (7a PWA ✅, 7b shortcuts, 7c UI redesign, 7d
+onboarding) to keep the "one phase per session" rule intact. See PLAN.md's
+"Phase 7" section for the remaining open decisions, file list, and a
+ready-to-paste kickoff prompt for whichever sub-phase comes next.
 
 Extra ideas for after the plan is complete: daily discovery puzzles,
 rare/secret elements, journal PNG export.
