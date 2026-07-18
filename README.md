@@ -23,6 +23,20 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Phase 2.7 — Acid (19 Jul 2026)
+
+- New Acid element: a real alternative to the Erase button (which stays
+  exactly as it is), not a replacement — a genuine substance that destroys
+  things through actual chemistry.
+- Acid dissolves Iron and releases real Hydrogen gas (which can then drift
+  to a flame and become Water, chaining into the existing Hydrogen).
+- Acid slowly dissolves Stone, the same way acid rain erodes limestone.
+- Acid deliberately does NOT dissolve Gold (gold famously resists ordinary
+  acids — the same real-world fact behind aqua regia) or Glass (only
+  hydrofluoric acid attacks glass) — both confirmed by testing, not just
+  assumed from omission.
+- `elements.js` only; `game.js`/`effects.js` untouched.
+
 ## Phase 8 — Panelized layout (19 Jul 2026)
 
 - The palette (54 elements!) used to be one long flat wall above the

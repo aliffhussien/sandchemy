@@ -588,6 +588,48 @@ Done when: Acid+Iron→Hydrogen confirmed in browser (sealed test container —
 see the methodology note above), Acid+Stone slow-dissolves, Acid on Gold/
 Glass does nothing, old saves still load.
 
+**Status: DONE, live-verified in a real browser (19 Jul 2026).**
+
+**What shipped, matching SCIENCE.md's spec exactly:** new `E.ACID` (id 55),
+`elements.js` only — `type: 'liquid'`, `density: 1840` (concentrated
+sulfuric acid, sinks through water), `category: 'chemistry'`,
+`starter: true` (same convention every other element already uses).
+Two new `REACTIONS` entries: `Acid + Iron → Hydrogen + Empty` (Iron
+dissolves away, Acid itself becomes the escaping Hydrogen gas — Fe + 2HCl
+→ FeCl₂ + H₂, simplified to this engine's two-body touch-reaction shape,
+same simplification style Phase 2.6 already used for Hydrogen+Fire→Water)
+at `prob: 0.15`, and `Acid + Stone → Empty + Empty` (both consumed) at
+`prob: 0.05`, mirroring the exact treatment the existing Acid Rain + Stone
+reaction already gets. Gold and Glass both get ZERO new reaction entries —
+per SCIENCE.md, the absence itself is the correct, real chemistry (gold
+resists ordinary acids; only hydrofluoric acid attacks glass), so there
+was nothing to write for either. `game.js`/`effects.js` untouched — same
+"content lives in elements.js, engine never touched" pattern every prior
+content-only phase has kept.
+
+**Live browser verification — all four payoffs confirmed with real engine
+state, not just code review, using the fully-sealed-container methodology
+Phase 2.6/4.6 established (each pair placed adjacent inside its own tight
+4×3 wall box — ceiling, floor, and both outer sides all Wall — so neither
+cell has anywhere to move or drain away before reacting):**
+- **Acid + Iron**, stepped 300 frames: Iron's cell became `EMPTY` (dissolved
+  away) and Acid's cell became `HYDROGEN` (the released gas) — exactly the
+  designed mapping, confirmed via direct `grid[]` reads.
+- **Acid + Stone**, stepped 300 frames: both cells became `EMPTY` — the
+  slow-dissolve payoff, confirmed the same way.
+- **Acid + Gold**, stepped 300 frames: both cells UNCHANGED (`grid[]` still
+  reads Gold and Acid respectively) — the deliberate non-reaction holds.
+- **Acid + Glass**, stepped 300 frames: both cells UNCHANGED — the other
+  deliberate non-reaction holds.
+- Acid confirmed appearing correctly in the palette's Chemistry tab
+  (Phase 8's category system), alongside Salt/Salt Water/Oil/Baking
+  Soda/Vinegar.
+- Zero console errors across a fresh boot and the full test pass. Old-save
+  compatibility holds trivially — Acid is purely additive data (a new id
+  + two new reaction entries), the same shape as every prior Phase 2.x
+  content addition that's never required a save-format migration.
+- **Phase 2.7 has no open items left.**
+
 ## Phase 3 — Visual juice (feels alive)
 
 Goal: same simulation, dramatically better feel. No libraries — canvas only.
@@ -1812,7 +1854,15 @@ regression — updated the cheatsheet's own copy (`index.html`) to say
   exact-frame reversion). Surfaced a useful non-bug methodology finding about
   testing mobile-cell reactions in unsealed containers — see note above.
   Phase 2.6 fully verified, no open items.)
-- [ ] Phase 2.7 — Acid (optional, no fixed slot — see SCIENCE.md "Acid")
+- [x] Phase 2.7 — Acid — 19 Jul 2026 (new Acid element, elements.js only:
+  Acid+Iron→Hydrogen+Empty (real Fe+2HCl chemistry), Acid+Stone→both Empty
+  (slow dissolve, mirrors Acid Rain's existing treatment), zero new
+  reactions for Gold/Glass (the deliberate non-reactions SCIENCE.md calls
+  for — absence IS the correct chemistry). Live-verified: all 4 payoffs
+  (Iron dissolves+Hydrogen releases, Stone slow-dissolves, Gold unaffected,
+  Glass unaffected) confirmed via direct grid[] state after 300 stepped
+  frames in fully sealed test containers, zero console errors. No open
+  items.)
 - [x] Phase 3 — visual juice — 18 Jul 2026 (glow, particles, heat shimmer,
   wet-look water highlight, all in a new `effects.js` on its own overlay
   canvas; game.js only gained one guarded hook line, still 49/49 physics

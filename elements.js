@@ -73,7 +73,10 @@ const E = {
   // ---- Phase 3: Nuclear Physics ----
   URANIUM: 52,
   RADIATION: 53,
-  NUCLEAR_WASTE: 54
+  NUCLEAR_WASTE: 54,
+
+  // ---- Phase 2.7: Acid (see SCIENCE.md "Acid") ----
+  ACID: 55
 };
 
 // type: how the engine moves it
@@ -240,7 +243,19 @@ const ELEMENTS = {
 
   [E.URANIUM]: { name: 'Uranium', type: 'static', emoji: '☢️', color: [50, 150, 50], density: 19050, heatEmit: 300, meltsAt: 1132, meltsTo: E.LAVA, starter: true, category: 'electric' },
   [E.RADIATION]: { name: 'Radiation', type: 'gas', emoji: '❇️', color: [100, 255, 100], density: 0, starter: false, category: 'electric' },
-  [E.NUCLEAR_WASTE]: { name: 'Nuclear Waste', type: 'liquid', emoji: '🧪', color: [20, 80, 20], density: 3000, heatEmit: 80, starter: false, category: 'electric' }
+  [E.NUCLEAR_WASTE]: { name: 'Nuclear Waste', type: 'liquid', emoji: '🧪', color: [20, 80, 20], density: 3000, heatEmit: 80, starter: false, category: 'electric' },
+
+  // ---- Phase 2.7: Acid (see SCIENCE.md "Acid") ----
+  // A real alternative to the Erase button, not a replacement: a genuine
+  // substance that destroys things through real chemistry. Density is
+  // concentrated sulfuric acid's real value (denser than water, sinks
+  // through it, same density-sink mechanism every other liquid uses).
+  // Deliberately has no reaction with Gold (gold famously resists ordinary
+  // acids — the same Gold/Iron contrast Lava drew in Phase 2.6, repeated
+  // here with a completely different mechanism) or Glass (true for
+  // ordinary acids; only hydrofluoric acid attacks glass) — both are
+  // real non-reactions, so there's nothing to write for them at all.
+  [E.ACID]: { name: 'Acid', emoji: '🧪', color: [180, 220, 70], type: 'liquid', starter: true, category: 'chemistry', density: 1840 }
 };
 
 // ---- Phase 8: palette categories (pure data, read by game.js's
@@ -383,5 +398,11 @@ const REACTIONS = [
   { a: E.URANIUM, b: E.WATER, aTo: E.URANIUM, bTo: E.STEAM, prob: 0.5, why: 'Uranium generates intense heat, boiling water immediately.' },
 
   { a: E.RUST,     b: E.ASH,   aTo: E.IRON,   bTo: E.EMPTY, minTemp: 1000,
-    why: 'Smelting: Carbon (in ash) mixed with iron oxide (rust) at high temperatures strips the oxygen, yielding pure iron and completing the cycle.' }
+    why: 'Smelting: Carbon (in ash) mixed with iron oxide (rust) at high temperatures strips the oxygen, yielding pure iron and completing the cycle.' },
+
+  // ---- Phase 2.7: Acid (see SCIENCE.md "Acid") ----
+  { a: E.ACID, b: E.IRON, aTo: E.HYDROGEN, bTo: E.EMPTY, prob: 0.15,
+    why: 'Fe + 2HCl → FeCl₂ + H₂ — iron genuinely dissolves in acid and releases real hydrogen gas. The acid is consumed in the reaction, not a catalyst — and that released Hydrogen can drift to a flame and become Water, chaining into Phase 2.6’s existing Hydrogen for free.' },
+  { a: E.ACID, b: E.STONE, aTo: E.EMPTY, bTo: E.EMPTY, prob: 0.05,
+    why: 'Acid measurably erodes limestone and similar rock over time — kept as a slow, low-probability wear rather than instant dissolving, same treatment Acid Rain already gets against Stone.' }
 ];
