@@ -1169,7 +1169,7 @@ justifications (where present) as unverified.
 **Status: Done (18 Jul 2026).**
 Added `audio.js` which dynamically synthesizes a fire rumble, sizzle loop, and discovery chime using Web Audio API completely decoupled from `game.js`. Added a Reset Everything and Mute button to the toolbar, and enlarged palette chips for optimal mobile tap-targets. Forced `user-scalable=no`.
 
-## Phase 7 — UI polish, shortcuts, installability & onboarding (SCOPED, NOT STARTED)
+## Phase 7 — UI polish, shortcuts, installability & onboarding (7a DONE, 7b–7d SCOPED)
 
 **Origin (19 Jul 2026):** Aliff asked for four things in one message: a more
 compact/minimalist UI, game-like keyboard shortcuts, a PWA install prompt on
@@ -1446,9 +1446,10 @@ compose with 7b/7c rather than duplicate them — no separate help system.
   shows again, and it visually matches 7c's finished layout (build this
   sub-phase last, per the ordering note above).
 
-**Status: SCOPED ONLY, 19 Jul 2026 — no code written for Phase 7 yet.** This
+**Status: 7a DONE and live-verified (19 Jul 2026, see its own Status note
+above); 7b, 7c, 7d still SCOPED ONLY — no code written for those yet.** This
 section exists so a future session (this one or a fresh Cowork session) can
-pick up any of 7a–7d independently with full context, without re-deriving
+pick up any of 7b–7d independently with full context, without re-deriving
 the open decisions above from scratch. See the kickoff prompt near the top
 of this file for how to hand this off.
 
@@ -1529,9 +1530,13 @@ of this file for how to hand this off.
   verified, no open items.)
 - [x] Phase 5 — Element Lab + custom worlds + share codes
 - [x] Phase 6 — sound + polish
-- [ ] Phase 7 — UI polish, shortcuts, PWA installability, onboarding —
-  SCOPED 19 Jul 2026. Split into 7a (PWA) / 7b (shortcuts) / 7c (UI
-  redesign) / 7d (onboarding); do one at a time, in that order.
+- [x] Phase 7a — PWA installability — 19 Jul 2026 (manifest.webmanifest, sw.js
+  shell caching, gold Phosphor-flask icon set, dismissible install pill;
+  `beforeinstallprompt` confirmed firing in a real browser, dismiss-persists
+  across reload, zero console errors. `elements.js`/`game.js` untouched.)
+- [ ] Phase 7b — keyboard shortcuts — SCOPED, not started
+- [ ] Phase 7c — UI redesign (compact/minimalist) — SCOPED, not started
+- [ ] Phase 7d — onboarding — SCOPED, not started
   - [x] 7a — PWA installability — 19 Jul 2026 (manifest.webmanifest, a
     minimal shell-caching sw.js, a Phosphor-flask icon set generated to
     match the app's own dark/gold theme, and a dismissible floating install
