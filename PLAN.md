@@ -2088,3 +2088,79 @@ render cleanly, pass their respective skills' validation/QA steps, and
 contain zero placeholder/lorem-ipsum text. The open items are business
 ones (team, incorporation), not build ones, and are flagged as such
 everywhere they appear.
+
+### Polish pass (19 Jul 2026) — deck defect sweep, responsive rebuild, gallery art, scroll motion
+
+**Trigger:** Cat asked to "polish the deck... check any defect e2e," make
+`landing.html` "responsive to every devices screen," and add "more
+screenshot of different kind of experiment and like many beautiful art."
+A follow-up mid-session request asked to also "improve the motion effect
+like the flow when scrolling logically smart modern."
+
+**Deck defect sweep:** found and fixed a second icon bug beyond the
+color/emoji issue already documented above — `gen_icons.js` was forcing
+every react-icons glyph into a flat square viewBox regardless of the
+icon's real native proportions (FontAwesome icons are not all square,
+e.g. `FaFlask` is 448×512, `FaGamepad`/`FaHandshake`/`FaSchool` are
+640×512), which silently stretched/squished the non-square icons into
+unrecognizable blobs. Caught via careful visual QA, not assumed correct
+from reading the code. Fixed by parsing each icon's real `viewBox`,
+computing a "contain" scale (`Math.min(px/vbW, px/vbH)`), and centering
+it in the square canvas via a nested `<svg>`. Full deck re-rendered and
+every icon re-inspected slide-by-slide; all crisp and correctly
+proportioned.
+
+**`landing.html` responsive rebuild:**
+- Nav rebuilt with a checkbox-hack hamburger menu for mobile. Cat
+  reported live: "the hamburger menu i cant click no effect." Root
+  cause: the `<input type="checkbox" id="navToggle">` was nested inside
+  `.nav-inner`, while `.mobile-links` was a sibling of `.nav-inner`
+  rather than of the checkbox itself, so the CSS `~` general-sibling
+  selector (`#navToggle:checked ~ .mobile-links`) never matched — no CSS
+  error, just silently no effect. Fixed by making `<input>`, `.nav-inner`,
+  and `.mobile-links` all direct children of `<header class="nav">` in
+  that order. Confirmed fixed with a real mouse click at the hamburger's
+  actual screen coordinates (not a JS-simulated click), showing the
+  mobile menu correctly sliding open.
+- Fluid typography via `clamp()` on the hero heading/sub, section
+  titles, and stat numbers; breakpoints added at 900px, 800px, 760px
+  (hamburger), and 480px.
+- Live-verified at 375px (mobile), 768px (tablet), and 1440px (desktop)
+  via a same-origin iframe test harness — the Chrome extension's
+  `resize_window` tool was confirmed NOT to actually change the page's
+  CSS viewport (`window.innerWidth` stayed at 1050px regardless of the
+  requested size across multiple attempts), so a temporary
+  `_viewport_test.html` with fixed-width iframes was used instead to get
+  genuine media-query behavior, then deleted after use.
+- **New Gallery section** (`#gallery`) with 6 hand-crafted inline SVG
+  illustrations of real in-app reactions: Volcano Eruption, Acid + Iron,
+  Ice + Lava, Lightning + Neon, Radiation + Lead, and Ecosystem (Fish +
+  Bug). Confirmed rendering correctly and reflowing from a 1-column
+  (mobile) to 2-column (tablet) to 3-column (desktop) grid.
+
+**Scroll motion system:** added an IntersectionObserver-driven
+scroll-reveal (`.reveal`/`.js-ready`/`.in-view`), a nav bar that gains a
+border/shadow once the page scrolls past 8px, and staggered reveal
+delays for sibling groups — all gated behind `.js-ready` (so content
+stays visible if JS fails to load) and disabled under
+`prefers-reduced-motion`. Live-verified the reveal firing incrementally
+while scrolling (`.reveal.in-view` count growing) and the nav shadow
+toggling correctly.
+
+- **Bug found via live hover-testing (not guessed):** `.gallery-card:hover`
+  and `.card:hover` set `transform` for a lift-on-hover effect, but the
+  scroll-reveal rule `.js-ready .reveal.in-view{transform:translateY(0);}`
+  has higher specificity (3 classes vs. the hover rule's 2), so it was
+  silently winning the `transform` property and cancelling the hover lift
+  entirely — confirmed via `getComputedStyle(...).transform` reading the
+  identity matrix on hover instead of the expected translate/scale. Fixed
+  with a targeted `!important` on both hover rules' `transform`
+  declarations, each with an explanatory comment. Re-verified live after
+  the fix: computed transform on a hovered gallery card now correctly
+  reads `matrix(1.015, 0, 0, 1.015, 0, -4)` (translateY(-4px)
+  scale(1.015)). `.cta-btn:hover` was checked and does NOT have this
+  conflict, since no `.cta-btn` element carries the `.reveal` class.
+
+**No open items** — hamburger, responsive breakpoints, gallery art, and
+scroll motion are all live-verified in a real browser at mobile/tablet/
+desktop widths, not just reasoned about from source.

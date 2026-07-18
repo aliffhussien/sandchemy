@@ -14,136 +14,239 @@
   html{scroll-behavior:smooth;}
   body{
     margin:0; font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
-    background:var(--bg); color:var(--text); line-height:1.65;
+    background:var(--bg); color:var(--text); line-height:1.65; overflow-x:hidden;
   }
   a{color:var(--gold);}
+  img,svg{max-width:100%; display:block;}
   .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
-  header.nav{
-    position:sticky; top:0; z-index:20; background:rgba(13,15,26,0.9);
-    backdrop-filter:blur(8px); border-bottom:1px solid var(--border);
+
+  /* ---------- Scroll-reveal (progressive enhancement) ---------- */
+  /* Only takes effect once JS confirms it's running (html.js-ready) — so a page
+     with JS blocked or failing never leaves content permanently invisible. */
+  .js-ready .reveal{
+    opacity:0; transform:translateY(22px);
+    transition:opacity 0.6s ease, transform 0.6s ease;
   }
-  .nav-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; max-width:1080px; margin:0 auto;}
-  .brand{display:flex; align-items:center; gap:8px; font-weight:800; font-size:1.2rem; color:#fff;}
-  .brand .flask{font-size:1.4rem;}
-  nav.links{display:flex; gap:22px; font-size:0.95rem;}
-  nav.links a{color:var(--muted); text-decoration:none;}
+  .js-ready .reveal.in-view{opacity:1; transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){
+    .js-ready .reveal{opacity:1; transform:none; transition:none;}
+  }
+
+  /* ---------- Nav ---------- */
+  header.nav{
+    position:sticky; top:0; z-index:30; background:rgba(13,15,26,0.92);
+    backdrop-filter:blur(8px); border-bottom:1px solid transparent;
+    transition:border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  header.nav.scrolled{
+    border-bottom-color:var(--border); box-shadow:0 8px 24px rgba(0,0,0,0.35);
+  }
+  .nav-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:14px 24px; max-width:1080px; margin:0 auto;
+  }
+  .brand{
+    display:flex; align-items:center; gap:8px; font-weight:800;
+    font-size:1.15rem; color:#fff; white-space:nowrap; flex-shrink:0;
+  }
+  .brand .flask{font-size:1.35rem;}
+  nav.links{display:flex; gap:20px; font-size:0.93rem; flex-wrap:wrap;}
+  nav.links a{color:var(--muted); text-decoration:none; white-space:nowrap;}
   nav.links a:hover{color:var(--gold);}
+  .nav-cta{flex-shrink:0;}
   .cta-btn{
     display:inline-block; background:var(--gold); color:#1a1300; font-weight:700;
-    padding:10px 20px; border-radius:10px; text-decoration:none; border:none; cursor:pointer;
-    font-size:0.95rem;
+    padding:10px 18px; border-radius:10px; text-decoration:none; border:none; cursor:pointer;
+    font-size:0.9rem; white-space:nowrap; transition:transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .cta-btn.ghost{
-    background:transparent; color:var(--gold); border:1px solid var(--gold);
+  .cta-btn:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(255,215,107,0.25);}
+  .cta-btn.ghost{background:transparent; color:var(--gold); border:1px solid var(--gold);}
+  .cta-btn.ghost:hover{box-shadow:0 8px 20px rgba(255,215,107,0.12);}
+  .cta-btn.small{padding:9px 14px; font-size:0.85rem;}
+  @media (prefers-reduced-motion: reduce){ .cta-btn{transition:none;} .cta-btn:hover{transform:none;} }
+
+  /* hamburger: hidden on desktop, checkbox-driven, no JS needed */
+  #navToggle{display:none;}
+  .nav-burger{
+    display:none; width:40px; height:40px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel2); cursor:pointer; align-items:center; justify-content:center;
+    flex-shrink:0;
   }
+  .nav-burger span, .nav-burger::before, .nav-burger::after{
+    content:""; display:block; width:18px; height:2px; background:var(--text); border-radius:2px;
+  }
+  .nav-burger{flex-direction:column; gap:4px;}
+  .mobile-links{display:none;}
+
+  @media (max-width: 760px){
+    nav.links{display:none;}
+    .nav-burger{display:flex;}
+    .mobile-links{
+      display:block; max-height:0; overflow:hidden; background:var(--panel);
+      border-bottom:1px solid var(--border); transition:max-height 0.25s ease;
+    }
+    .mobile-links a{
+      display:block; padding:14px 24px; color:var(--muted); text-decoration:none;
+      border-top:1px solid var(--border); font-size:0.95rem;
+    }
+    .mobile-links a:hover{color:var(--gold);}
+    #navToggle:checked ~ .mobile-links{max-height:400px;}
+    .brand{font-size:1.05rem;}
+    .nav-cta .cta-btn{padding:8px 12px; font-size:0.8rem;}
+  }
+  @media (max-width: 420px){
+    .nav-cta{display:none;}
+  }
+
+  /* ---------- Hero ---------- */
   .hero{
-    text-align:center; padding:90px 24px 70px; background:
-      radial-gradient(ellipse at 50% -10%, rgba(255,215,107,0.12), transparent 60%);
+    text-align:center; padding:clamp(50px,10vw,90px) 20px clamp(40px,8vw,70px);
+    background:radial-gradient(ellipse at 50% -10%, rgba(255,215,107,0.12), transparent 60%);
   }
   .hero h1{
-    font-size:3.2rem; margin:0 0 14px; color:#fff; letter-spacing:-0.02em;
+    font-size:clamp(1.9rem, 6vw, 3.2rem); margin:0 0 14px; color:#fff; letter-spacing:-0.02em;
   }
   .hero h1 .accent{color:var(--gold);}
   .hero p.sub{
-    font-size:1.25rem; color:var(--muted); max-width:640px; margin:0 auto 34px;
+    font-size:clamp(1rem, 2.6vw, 1.25rem); color:var(--muted); max-width:640px; margin:0 auto 32px;
   }
-  .hero .ctas{display:flex; gap:16px; justify-content:center; flex-wrap:wrap;}
-  .badge-row{
-    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:36px;
-  }
+  .hero .ctas{display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
+  .badge-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:32px;}
   .badge{
-    font-size:0.8rem; color:var(--muted); border:1px solid var(--border);
-    padding:6px 12px; border-radius:999px; background:var(--panel);
+    font-size:0.78rem; color:var(--muted); border:1px solid var(--border);
+    padding:6px 12px; border-radius:999px; background:var(--panel); white-space:nowrap;
   }
-  section{padding:70px 24px;}
+
+  section{padding:clamp(40px,8vw,70px) 20px;}
   section.alt{background:var(--panel);}
   h2.section-title{
-    font-size:2rem; text-align:center; color:#fff; margin:0 0 10px;
+    font-size:clamp(1.5rem, 4vw, 2rem); text-align:center; color:#fff; margin:0 0 10px;
   }
   p.section-lead{
-    text-align:center; color:var(--muted); max-width:620px; margin:0 auto 46px; font-size:1.05rem;
+    text-align:center; color:var(--muted); max-width:620px; margin:0 auto 40px; font-size:1.02rem;
   }
   .grid{
     display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
-    gap:20px; max-width:1080px; margin:0 auto;
+    gap:18px; max-width:1080px; margin:0 auto;
   }
   .card{
-    background:var(--panel2); border:1px solid var(--border); border-radius:14px;
-    padding:24px;
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:22px;
+    min-width:0; transition:transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
-  .card .icon{font-size:1.8rem; margin-bottom:10px; display:block;}
-  .card h3{margin:0 0 8px; color:#fff; font-size:1.1rem;}
-  .card p{margin:0; color:var(--muted); font-size:0.95rem;}
+  .card:hover{
+    /* !important: the scroll-reveal system (.reveal.in-view, 3 classes) otherwise
+       outranks this 2-class hover rule and silently wins the `transform` property,
+       cancelling the hover lift entirely — found via live testing, not guessed. */
+    transform:translateY(-4px) !important; border-color:#3a4270; box-shadow:0 12px 28px rgba(0,0,0,0.3);
+  }
+  .card .icon{font-size:1.7rem; margin-bottom:10px; display:block;}
+  .card h3{margin:0 0 8px; color:#fff; font-size:1.08rem;}
+  .card p{margin:0; color:var(--muted); font-size:0.94rem;}
+  @media (prefers-reduced-motion: reduce){ .card{transition:none;} .card:hover{transform:none;} }
+
   .split{
-    display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;
+    display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,5vw,50px); align-items:center;
     max-width:1080px; margin:0 auto;
   }
-  @media (max-width:800px){ .split{grid-template-columns:1fr;} .hero h1{font-size:2.2rem;} }
+  @media (max-width:800px){ .split{grid-template-columns:1fr;} }
+
   .mock{
     background:var(--panel2); border:1px solid var(--border); border-radius:16px;
-    padding:18px; box-shadow:0 20px 60px rgba(0,0,0,0.4);
+    padding:16px; box-shadow:0 20px 60px rgba(0,0,0,0.4); min-width:0;
   }
-  .mock-row{display:flex; gap:14px;}
-  .mock-tabs{display:flex; flex-direction:column; gap:6px; width:120px;}
+  .mock-row{display:flex; gap:12px; flex-wrap:wrap;}
+  .mock-tabs{display:flex; flex-direction:row; gap:6px; width:100%; flex-wrap:wrap;}
+  @media (min-width:560px){ .mock-tabs{flex-direction:column; width:110px;} }
   .mock-tab{
     background:var(--panel); border:1px solid var(--border); border-radius:8px;
-    padding:6px 8px; font-size:0.75rem; color:var(--muted);
+    padding:6px 8px; font-size:0.72rem; color:var(--muted); white-space:nowrap;
   }
   .mock-tab.active{border-color:var(--gold); color:var(--gold);}
   .mock-canvas{
-    flex:1; height:200px; border-radius:8px; border:1px solid var(--border);
+    flex:1; min-width:200px; height:180px; border-radius:8px; border:1px solid var(--border);
     background:
       linear-gradient(180deg, #0d0f1a 0%, #0d0f1a 60%, #3a2a12 60%, #3a2a12 100%),
       radial-gradient(circle at 30% 80%, #ff8a3d 0%, transparent 25%),
       radial-gradient(circle at 70% 40%, #7ee3ff33 0%, transparent 20%);
     position:relative; overflow:hidden;
   }
-  .mock-caption{font-size:0.8rem; color:var(--muted); text-align:center; margin-top:12px;}
+  .mock-caption{font-size:0.78rem; color:var(--muted); text-align:center; margin-top:12px;}
   ul.check{list-style:none; padding:0; margin:0;}
-  ul.check li{
-    padding:8px 0 8px 28px; position:relative; color:var(--text); font-size:1rem;
+  ul.check li{padding:8px 0 8px 28px; position:relative; color:var(--text); font-size:1rem;}
+  ul.check li::before{content:"✓"; position:absolute; left:0; top:8px; color:var(--gold); font-weight:800;}
+
+  /* ---------- Gallery ---------- */
+  .gallery-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+    gap:20px; max-width:1080px; margin:0 auto;
   }
-  ul.check li::before{
-    content:"✓"; position:absolute; left:0; top:8px; color:var(--gold); font-weight:800;
+  .gallery-card{
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; transition:transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
-  .quote-block{
-    max-width:700px; margin:0 auto; text-align:center; font-size:1.15rem; color:#fff;
-    font-style:italic; padding:0 20px;
+  .gallery-card:hover{
+    /* !important: same reveal-vs-hover specificity fight as .card:hover above. */
+    transform:translateY(-4px) scale(1.015) !important; border-color:#3a4270; box-shadow:0 14px 32px rgba(0,0,0,0.35);
   }
-  .quote-block cite{
-    display:block; margin-top:16px; font-style:normal; color:var(--muted); font-size:0.9rem;
+  .gallery-card .art{display:block; width:100%; height:auto; background:#0d0f1a; transition:transform 0.4s ease;}
+  .gallery-card:hover .art{transform:scale(1.04);}
+  @media (prefers-reduced-motion: reduce){
+    .gallery-card, .gallery-card .art{transition:none;}
+    .gallery-card:hover{transform:none;} .gallery-card:hover .art{transform:none;}
   }
+  .gallery-caption{padding:14px 16px;}
+  .gallery-caption h4{margin:0 0 4px; color:#fff; font-size:0.98rem;}
+  .gallery-caption p{margin:0; color:var(--muted); font-size:0.85rem;}
+
+  .stat-row{display:flex; gap:clamp(16px,5vw,40px); justify-content:center; flex-wrap:wrap; margin:36px 0 0;}
+  .stat{text-align:center;}
+  .stat .num{font-size:clamp(1.5rem,4vw,2.1rem); font-weight:800; color:var(--gold);}
+  .stat .label{font-size:0.82rem; color:var(--muted);}
+
   .cta-final{
     text-align:center; background:linear-gradient(180deg, var(--panel), var(--bg));
     border-top:1px solid var(--border); border-bottom:1px solid var(--border);
   }
-  .cta-final h2{color:#fff; font-size:2rem; margin-bottom:10px;}
-  .cta-final p{color:var(--muted); margin-bottom:30px;}
-  footer{
-    padding:40px 24px; text-align:center; color:var(--muted); font-size:0.85rem;
-    border-top:1px solid var(--border);
-  }
+  .cta-final h2{color:#fff; font-size:clamp(1.4rem,4vw,2rem); margin-bottom:10px;}
+  .cta-final p{color:var(--muted); margin-bottom:28px;}
+
+  footer{padding:36px 20px; text-align:center; color:var(--muted); font-size:0.85rem; border-top:1px solid var(--border);}
   footer a{color:var(--muted); text-decoration:underline;}
-  footer .foot-links{display:flex; gap:18px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
-  .stat-row{display:flex; gap:40px; justify-content:center; flex-wrap:wrap; margin:40px 0 0;}
-  .stat{text-align:center;}
-  .stat .num{font-size:2.1rem; font-weight:800; color:var(--gold);}
-  .stat .label{font-size:0.85rem; color:var(--muted);}
+  footer .foot-links{display:flex; gap:16px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
+
+  @media (max-width:480px){
+    .wrap, section{padding-left:16px; padding-right:16px;}
+    .badge{font-size:0.72rem; padding:5px 10px;}
+    .card{padding:18px;}
+    .hero .ctas .cta-btn{width:100%; text-align:center;}
+    .hero .ctas{flex-direction:column;}
+  }
 </style>
 </head>
 <body>
 
 <header class="nav">
+  <input type="checkbox" id="navToggle">
   <div class="nav-inner">
     <div class="brand"><span class="flask">⚗️</span> Sandchemy</div>
     <nav class="links">
       <a href="#features">Features</a>
+      <a href="#gallery">Gallery</a>
       <a href="#educators">For Educators</a>
       <a href="#model">How It Works</a>
       <a href="about.html">About</a>
     </nav>
-    <a class="cta-btn" href="index.html">Launch the Sandbox →</a>
+    <div class="nav-cta"><a class="cta-btn small" href="index.html">Launch the Sandbox →</a></div>
+    <label class="nav-burger" for="navToggle" aria-label="Toggle menu"><span></span></label>
   </div>
+  <nav class="mobile-links">
+    <a href="#features">Features</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#educators">For Educators</a>
+    <a href="#model">How It Works</a>
+    <a href="about.html">About</a>
+    <a href="index.html">🧪 Launch the Sandbox</a>
+  </nav>
 </header>
 
 <section class="hero">
@@ -172,37 +275,37 @@
     <p class="section-lead">Every element, every reaction, every temperature in Sandchemy
       is grounded in a real number — documented and sourced, not invented for effect.</p>
     <div class="grid">
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🌡️</span>
         <h3>Real thermodynamics</h3>
         <p>Heat radiates, diffuses, and decays cell by cell. Lava melts ice from a
           distance. A wall genuinely blocks heat. Nothing is scripted — it emerges.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🧫</span>
         <h3>Defensible chemistry</h3>
         <p>Every recipe (Iron rusting, Acid dissolving metal, Hydrogen becoming Water)
           is justified in one real sentence of chemistry — no "magic" combinations.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🔎</span>
         <h3>Sensor Probe</h3>
         <p>Hover any cell to read its live temperature and state in real time — the
           same instinct as a real lab thermometer, built into the canvas itself.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🧪</span>
         <h3>Element Lab</h3>
         <p>Design your own element — emoji, color, physics behavior, up to 3 custom
           reactions — with zero code. Export it as a text code and share it instantly.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🌋</span>
         <h3>Prebuilt Scenarios</h3>
         <p>Load ready-made setups like Volcano Eruption to jump straight into a
           guided experiment instead of an empty grid.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">📓</span>
         <h3>Discovery Journal</h3>
         <p>Every new combination you find is logged automatically, forever — the
@@ -210,17 +313,209 @@
       </div>
     </div>
     <div class="stat-row">
-      <div class="stat"><div class="num">56</div><div class="label">real elements</div></div>
-      <div class="stat"><div class="num">8</div><div class="label">categories</div></div>
-      <div class="stat"><div class="num">0</div><div class="label">servers or accounts</div></div>
-      <div class="stat"><div class="num">100%</div><div class="label">runs offline once installed</div></div>
+      <div class="stat reveal"><div class="num">56</div><div class="label">real elements</div></div>
+      <div class="stat reveal"><div class="num">8</div><div class="label">categories</div></div>
+      <div class="stat reveal"><div class="num">0</div><div class="label">servers or accounts</div></div>
+      <div class="stat reveal"><div class="num">100%</div><div class="label">runs offline once installed</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="gallery">
+  <div class="wrap">
+    <h2 class="section-title">See it in action</h2>
+    <p class="section-lead">A few of the reactions you can trigger yourself, the moment you open the sandbox — every one grounded in real physics and chemistry, not a canned animation.</p>
+    <div class="gallery-grid">
+
+      <div class="gallery-card reveal">
+        <svg class="art" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>Volcano Eruption scenario</title>
+          <defs>
+            <linearGradient id="caveBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0d0f1a"/>
+              <stop offset="100%" stop-color="#1b1030"/>
+            </linearGradient>
+            <radialGradient id="lavaGlow" cx="50%" cy="60%" r="55%">
+              <stop offset="0%" stop-color="#ffe38a"/>
+              <stop offset="45%" stop-color="#ff7a1a"/>
+              <stop offset="100%" stop-color="#7a1a00" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="400" height="240" fill="url(#caveBg)"/>
+          <ellipse cx="200" cy="210" rx="240" ry="60" fill="url(#lavaGlow)"/>
+          <path d="M60 240 L150 70 L185 110 L200 60 L215 110 L250 70 L340 240 Z" fill="#241a24"/>
+          <path d="M60 240 L150 70 L185 110 L200 60 L172 100 Z" fill="#332438"/>
+          <path d="M185 105 Q200 150 178 200 Q190 220 200 240 L165 240 Q160 190 172 150 Z" fill="#ff8a2e"/>
+          <path d="M215 108 Q225 160 245 205 Q235 225 232 240 L260 240 Q262 190 240 145 Z" fill="#ffb64e"/>
+          <rect x="130" y="225" width="140" height="15" fill="#ff7a1a"/>
+          <circle cx="170" cy="55" r="4" fill="#ffcf8a"/>
+          <circle cx="210" cy="30" r="3" fill="#ffcf8a"/>
+          <circle cx="195" cy="15" r="2.4" fill="#ffe0ad"/>
+          <circle cx="225" cy="50" r="2.6" fill="#ffcf8a"/>
+          <ellipse cx="130" cy="45" rx="26" ry="10" fill="#3a3a44" opacity="0.5"/>
+          <ellipse cx="260" cy="35" rx="30" ry="11" fill="#3a3a44" opacity="0.4"/>
+        </svg>
+        <div class="gallery-caption">
+          <h4>🌋 Volcano Eruption</h4>
+          <p>A prebuilt Scenario — a hollow stone mountain loaded with magma, ready to erupt the moment you step in.</p>
+        </div>
+      </div>
+
+      <div class="gallery-card reveal">
+        <svg class="art" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>Acid dissolving Iron, releasing Hydrogen gas</title>
+          <defs>
+            <linearGradient id="acidBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0d0f1a"/>
+              <stop offset="100%" stop-color="#12251a"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="240" fill="url(#acidBg)"/>
+          <ellipse cx="200" cy="195" rx="160" ry="34" fill="#b9d94a" opacity="0.85"/>
+          <path d="M140 195 Q145 130 165 100 L245 100 Q262 135 258 190 Q230 205 200 200 Q165 206 140 195 Z" fill="#8d97a6"/>
+          <path d="M165 170 Q185 185 175 195 Q195 205 210 190 Q225 202 245 188 Q252 178 258 190" fill="none" stroke="#b9d94a" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+          <circle cx="178" cy="70" r="7" fill="#bdeeff" opacity="0.9"/>
+          <circle cx="200" cy="45" r="5" fill="#bdeeff" opacity="0.85"/>
+          <circle cx="222" cy="75" r="6" fill="#bdeeff" opacity="0.9"/>
+          <circle cx="210" cy="20" r="4" fill="#d8f6ff" opacity="0.8"/>
+          <circle cx="190" cy="95" r="4.5" fill="#bdeeff" opacity="0.85"/>
+          <path d="M178 100 L178 78" stroke="#bdeeff" stroke-width="2" opacity="0.4"/>
+          <path d="M200 90 L200 55" stroke="#bdeeff" stroke-width="2" opacity="0.4"/>
+          <path d="M222 100 L222 82" stroke="#bdeeff" stroke-width="2" opacity="0.4"/>
+        </svg>
+        <div class="gallery-caption">
+          <h4>🧪 Acid + Iron</h4>
+          <p>Iron genuinely dissolves and releases real Hydrogen gas — Fe + 2HCl → FeCl₂ + H₂, simplified but real.</p>
+        </div>
+      </div>
+
+      <div class="gallery-card reveal">
+        <svg class="art" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>Ice meeting Lava, producing steam</title>
+          <defs>
+            <linearGradient id="iceLavaBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0d0f1a"/>
+              <stop offset="100%" stop-color="#191225"/>
+            </linearGradient>
+            <radialGradient id="lavaGlow2" cx="30%" cy="70%" r="50%">
+              <stop offset="0%" stop-color="#ffcf7a"/>
+              <stop offset="100%" stop-color="#7a1a00" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect width="400" height="240" fill="url(#iceLavaBg)"/>
+          <ellipse cx="120" cy="190" rx="150" ry="55" fill="url(#lavaGlow2)"/>
+          <path d="M20 210 Q90 150 170 195 Q150 220 100 222 Q50 224 20 210 Z" fill="#ff7a1a"/>
+          <path d="M60 195 Q100 175 150 190" stroke="#ffd98a" stroke-width="4" fill="none" opacity="0.8"/>
+          <rect x="250" y="110" width="110" height="110" rx="10" fill="#bfe9ff"/>
+          <rect x="250" y="110" width="110" height="110" rx="10" fill="#ffffff" opacity="0.12"/>
+          <path d="M260 130 L300 165 M330 120 L310 160 M340 190 L300 200" stroke="#9fd6ef" stroke-width="2" opacity="0.6"/>
+          <ellipse cx="200" cy="140" rx="34" ry="16" fill="#ffffff" opacity="0.55"/>
+          <ellipse cx="225" cy="115" rx="28" ry="13" fill="#ffffff" opacity="0.45"/>
+          <ellipse cx="185" cy="100" rx="22" ry="11" fill="#ffffff" opacity="0.35"/>
+          <ellipse cx="210" cy="80" rx="18" ry="9" fill="#ffffff" opacity="0.25"/>
+        </svg>
+        <div class="gallery-caption">
+          <h4>🧊 Ice + Lava</h4>
+          <p>Heat radiates through open air — ice melts and lava cools measurably, even before they touch.</p>
+        </div>
+      </div>
+
+      <div class="gallery-card reveal">
+        <svg class="art" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>Lightning striking Neon gas, exciting it into a glow</title>
+          <defs>
+            <linearGradient id="stormBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0d0f1a"/>
+              <stop offset="100%" stop-color="#141a2b"/>
+            </linearGradient>
+            <radialGradient id="neonGlow" cx="50%" cy="65%" r="45%">
+              <stop offset="0%" stop-color="#9cffcf"/>
+              <stop offset="60%" stop-color="#37f0a8" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#37f0a8" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect width="400" height="240" fill="url(#stormBg)"/>
+          <ellipse cx="200" cy="165" rx="140" ry="70" fill="url(#neonGlow)"/>
+          <path d="M195 10 L165 100 L195 100 L155 200 L245 90 L205 90 Z" fill="#fff3b0"/>
+          <path d="M195 10 L165 100 L195 100 L155 200 L245 90 L205 90 Z" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.7"/>
+          <circle cx="200" cy="165" r="10" fill="#c8ffe8"/>
+          <circle cx="150" cy="150" r="4" fill="#8affd0"/>
+          <circle cx="250" cy="145" r="5" fill="#8affd0"/>
+          <circle cx="230" cy="190" r="3.5" fill="#c8ffe8"/>
+          <circle cx="170" cy="195" r="3" fill="#8affd0"/>
+          <polygon points="90,215 105,195 118,215 108,220 98,222" fill="#cfeeff" opacity="0.75"/>
+          <polygon points="290,220 302,202 316,222 305,226" fill="#cfeeff" opacity="0.6"/>
+        </svg>
+        <div class="gallery-caption">
+          <h4>⚡ Lightning + Neon</h4>
+          <p>~30,000°C lightning excites inert Neon into a genuine glow — and can fuse Sand into Glass in the same strike.</p>
+        </div>
+      </div>
+
+      <div class="gallery-card reveal">
+        <svg class="art" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>Radiation safely blocked by a Lead shield</title>
+          <defs>
+            <linearGradient id="radBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0d0f1a"/>
+              <stop offset="100%" stop-color="#141225"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="240" fill="url(#radBg)"/>
+          <rect x="20" y="90" width="70" height="70" rx="8" fill="#4a6b3a"/>
+          <circle cx="55" cy="125" r="10" fill="#9cffb0"/>
+          <path d="M55 125 m-24,0 a24,24 0 0 1 48,0" fill="none" stroke="#9cffb0" stroke-width="3" opacity="0.7"/>
+          <path d="M55 125 m-36,0 a36,36 0 0 1 72,0" fill="none" stroke="#9cffb0" stroke-width="2.4" opacity="0.45"/>
+          <path d="M55 125 m-48,0 a48,48 0 0 1 96,0" fill="none" stroke="#9cffb0" stroke-width="2" opacity="0.25"/>
+          <rect x="150" y="60" width="34" height="140" rx="4" fill="#7c8797"/>
+          <rect x="150" y="60" width="34" height="140" rx="4" fill="#ffffff" opacity="0.08"/>
+          <circle cx="330" cy="110" r="9" fill="#ffe38a"/>
+          <rect x="315" y="130" width="30" height="40" rx="4" fill="#ffe38a" opacity="0.9"/>
+          <text x="330" y="200" fill="#9aa2bd" font-size="13" font-family="Segoe UI, sans-serif" text-anchor="middle">safe zone</text>
+        </svg>
+        <div class="gallery-caption">
+          <h4>☢️ Radiation + Lead</h4>
+          <p>Uranium decays into real Radiation — Lead genuinely blocks it, the same reason lead aprons exist.</p>
+        </div>
+      </div>
+
+      <div class="gallery-card reveal">
+        <svg class="art" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>A small ecosystem with Fish and Bug creatures</title>
+          <defs>
+            <linearGradient id="ecoBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0d0f1a"/>
+              <stop offset="100%" stop-color="#101d22"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="240" fill="url(#ecoBg)"/>
+          <path d="M0 150 Q100 130 200 150 Q300 170 400 150 L400 240 L0 240 Z" fill="#1f4fa0"/>
+          <ellipse cx="130" cy="175" rx="34" ry="16" fill="#ff8a4a"/>
+          <polygon points="96,175 78,163 78,187" fill="#ff8a4a"/>
+          <circle cx="146" cy="171" r="3" fill="#1a1300"/>
+          <path d="M60 100 Q80 60 60 20" stroke="#4c7a3a" stroke-width="10" fill="none" stroke-linecap="round"/>
+          <path d="M60 60 Q90 50 110 30" stroke="#4c7a3a" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <ellipse cx="60" cy="18" rx="14" ry="10" fill="#6fae4a"/>
+          <ellipse cx="115" cy="27" rx="11" ry="8" fill="#6fae4a"/>
+          <ellipse cx="290" cy="120" rx="22" ry="13" fill="#5a3a2a"/>
+          <circle cx="272" cy="112" r="5" fill="#5a3a2a"/>
+          <line x1="278" y1="128" x2="270" y2="140" stroke="#5a3a2a" stroke-width="3" stroke-linecap="round"/>
+          <line x1="292" y1="132" x2="292" y2="144" stroke="#5a3a2a" stroke-width="3" stroke-linecap="round"/>
+          <line x1="304" y1="128" x2="312" y2="140" stroke="#5a3a2a" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="gallery-caption">
+          <h4>🐟🐛 Ecosystem</h4>
+          <p>Fish and Bugs with real survival thresholds — a light, food-chain-style touch of life among the chemistry.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
 <section class="alt" id="model">
   <div class="wrap split">
-    <div>
+    <div class="reveal">
       <h2 class="section-title" style="text-align:left">Physics IS the crafting system</h2>
       <p style="color:var(--muted); font-size:1.05rem;">Most "elemental" games fake their
         combos — pour water on lava, get a scripted splash. Sandchemy simulates it: real
@@ -234,7 +529,7 @@
         <li>Installable as a real app (PWA) — icon on your home screen, works with no internet</li>
       </ul>
     </div>
-    <div class="mock">
+    <div class="mock reveal">
       <div class="mock-row">
         <div class="mock-tabs">
           <div class="mock-tab">🧪 Basics</div>
@@ -256,25 +551,25 @@
     <p class="section-lead">A lab with no broken glassware, no chemical budget, and no
       safety incident report — just real cause-and-effect, on any device with a browser.</p>
     <div class="grid">
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🏫</span>
         <h3>Zero setup for teachers</h3>
         <p>No install, no login, no IT ticket. Open a link on a classroom projector or
           hand it to students on shared lab computers — it just runs.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🧑‍🔬</span>
         <h3>Safe, unlimited experimentation</h3>
         <p>Students can "waste" unlimited acid, lava, or electricity with zero cost and
           zero danger — the exact freedom real lab budgets can't give them.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">📊</span>
         <h3>Built-in assessment hooks</h3>
         <p>The Discovery Journal is a ready-made lab notebook — ask students to
           screenshot their journal as proof of the reactions they found.</p>
       </div>
-      <div class="card">
+      <div class="card reveal">
         <span class="icon">🔒</span>
         <h3>Privacy-first by design</h3>
         <p>No accounts, no tracking, no student data collected — everything saves
@@ -308,5 +603,53 @@
     data collection, by design.</p>
 </footer>
 
+<script>
+  // Progressive-enhancement scroll motion. If this script fails to run for any
+  // reason, .reveal elements simply stay at their default visible state (see the
+  // .js-ready gate in <style>) — content is never permanently hidden by CSS alone.
+  document.documentElement.classList.add('js-ready');
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    // Stagger siblings that reveal together (e.g. a row of feature cards) so they
+    // cascade in one after another instead of popping in all at once.
+    var seen = new Map();
+    document.querySelectorAll('.reveal').forEach(function(el){
+      var parent = el.parentElement;
+      var i = seen.has(parent) ? seen.get(parent) : 0;
+      seen.set(parent, i + 1);
+      el.style.transitionDelay = Math.min(i * 80, 400) + 'ms';
+    });
+
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function(el){ observer.observe(el); });
+  } else {
+    // Reduced-motion or no IntersectionObserver support: show everything immediately.
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in-view'); });
+  }
+
+  // Subtle nav elevation once the page has actually scrolled — a small, common
+  // "modern site" cue that the header is now floating over content.
+  var navEl = document.querySelector('header.nav');
+  var lastScrolled = false;
+  function onScroll(){
+    var scrolled = window.scrollY > 8;
+    if (scrolled !== lastScrolled) {
+      navEl.classList.toggle('scrolled', scrolled);
+      lastScrolled = scrolled;
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
 </body>
 </html>

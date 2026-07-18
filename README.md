@@ -23,6 +23,34 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Outreach & Grant Materials polish pass (19 Jul 2026)
+
+- `landing.html` rebuilt for full responsiveness: fluid `clamp()`
+  typography, breakpoints at 900/800/760/480px, and a mobile hamburger
+  menu. Fixed a real reported bug — the hamburger had no click effect
+  because the toggle checkbox wasn't a DOM sibling of the mobile menu it
+  was meant to control (the CSS `~` sibling selector never matched).
+  Live-verified at 375px/768px/1440px, including a real (non-simulated)
+  mouse click on the hamburger.
+- Added a Gallery section with 6 hand-illustrated SVG scenes of real
+  in-app reactions (Volcano Eruption, Acid+Iron, Ice+Lava,
+  Lightning+Neon, Radiation+Lead, Ecosystem), reflowing 1→2→3 columns
+  across breakpoints.
+- Added a scroll-motion system: staggered scroll-reveal animations and a
+  nav bar that gains a shadow on scroll, gated behind `prefers-reduced-
+  motion` and progressive enhancement. Found and fixed a CSS specificity
+  bug where the reveal system was silently cancelling the hover-lift
+  effect on cards/gallery items — confirmed via live `getComputedStyle`
+  checks before and after the fix.
+- Pitch deck defect sweep found and fixed a second icon bug: several
+  FontAwesome glyphs (fire extinguisher, gamepad, handshake, flask) were
+  rendering as stretched/squished blobs because icons were forced into a
+  square viewBox regardless of their true native proportions. Fixed and
+  re-verified slide-by-slide.
+- Full detail — root causes, live-verification steps, and the
+  `resize_window` tooling limitation worked around with a same-origin
+  iframe harness — is in PLAN.md's "Polish pass" subsection.
+
 ## Outreach & Grant Materials (19 Jul 2026)
 
 - New `landing.html` — a public marketing/startup front page (hero,
