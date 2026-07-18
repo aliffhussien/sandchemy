@@ -23,6 +23,25 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Phase 4.6 — Material textures (19 Jul 2026)
+
+- **Every solid material finally looks like what it is.** Wall now shows a
+  real mortar-line brick grid, Stone and Obsidian read as a scatter of
+  distinct rock chunks instead of a flat grey disc, Wood shows horizontal
+  grain streaks, Iron/Copper/Lead/Gold/Battery all get a diagonal metallic
+  sheen, and Glass sparkles with small faceted highlights.
+- **Stable, not flickery:** every pattern is generated from the cell's own
+  (x, y) position through a small deterministic hash — never
+  `Math.random()` per frame — so a painted rock keeps the exact same look
+  frame after frame instead of shimmering like static.
+- Lives entirely in `effects.js` (one new `texture:` field read from
+  `elements.js`, one new pass folded into the same per-frame scan Phase 3/4
+  already run — no new full-grid loop). `game.js` was not touched at all
+  this session; Stone is still `type: 'static'`, unchanged.
+- Verified headlessly against the real engine, 34/34 checks, 5x with zero
+  flakes — texture scope, position-seeding, a 3.5M-call NaN/Infinity sweep
+  on a busy scene, and existing physics regressions all hold.
+
 ## Phase 6 — Sound & final polish (18 Jul 2026)
 
 - **Web Audio Engine**: Complete, pure procedural Web Audio API sounds for the game without loading a single audio file. Implemented continuous fire rumble, a sizzle loop (dynamically modulated by the amount of steam and fire), a sand patter hook, and a pleasant FM discovery chime.

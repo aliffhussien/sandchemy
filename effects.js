@@ -134,6 +134,112 @@ function drawBackdropCell(x, y, night) {
   fxCtx.fillRect(x, y, 1, 1);
 }
 
+// ---------- Phase 4.6: material textures ----------
+// Gives each solid/static/metal element its own distinct surface pattern
+// (see PLAN.md Phase 4.6 for the "why" — Wall/Stone/Wood/metals all looked
+// identical besides color before this). Purely cosmetic, reads elements.js's
+// new `texture:` field, folds into the SAME per-frame grid scan glow/
+// particles/shading already use below — no new full-grid loop.
+//
+// The critical rule: every pattern is seeded from the cell's own (x,y)
+// position, NEVER Math.random() per frame. Random-per-frame would repaint a
+// different pixel every single frame, which reads as flickering TV static,
+// not a stable material — a real rock/plank/metal surface looks the same
+// from one frame to the next. texHash() is a small deterministic integer
+// hash: same (x, y, seed) in always produces the same float out.
+function texHash(x, y, seed) {
+  let h = x * 374761393 + y * 668265263 + (seed || 0) * 69069;
+  h = (h ^ (h >>> 13)) * 1274126177;
+  h = h ^ (h >>> 16);
+  return ((h >>> 0) % 1000) / 1000; // stable float in [0, 1), deterministic per (x,y,seed)
+}
+
+function drawTexture(x, y, el) {
+  switch (el.texture) {
+    case 'rocky': {
+      // Coarse ~3x3 clusters, each cluster gets its own stable shade offset
+      // (same cluster -> same hash -> same shade, every frame) — reads as a
+      // scatter of distinct pebbles/chunks, not a smooth flat disc, even
+      // though the underlying cell is one static, immovable mass.
+      const cx = (x / 3) | 0, cy = (y / 3) | 0;
+      const h = texHash(cx, cy, 37);
+      if (h > 0.55) {
+        fxCtx.globalCompositeOperation = 'lighter';
+        fxCtx.fillStyle = `rgba(255,255,255,${(0.05 + h * 0.10).toFixed(2)})`;
+      } else {
+        fxCtx.globalCompositeOperation = 'source-over';
+        fxCtx.fillStyle = `rgba(0,0,0,${(0.05 + (0.55 - h) * 0.18).toFixed(2)})`;
+      }
+      fxCtx.fillRect(x, y, 1, 1);
+      break;
+    }
+    case 'grain': {
+      // Thin horizontal streaks, broken into short position-seeded segments
+      // (not one line spanning the whole grid) so a big Wood mass reads as
+      // distinct planks — warm brown variation, classic wood grain.
+      const seg = texHash(x >> 2, y, 11);
+      if (seg > 0.72) {
+        fxCtx.globalCompositeOperation = 'source-over';
+        fxCtx.fillStyle = 'rgba(50,30,12,0.28)';
+        fxCtx.fillRect(x, y, 1, 1);
+      } else if (seg < 0.12) {
+        fxCtx.globalCompositeOperation = 'lighter';
+        fxCtx.fillStyle = 'rgba(200,160,100,0.18)';
+        fxCtx.fillRect(x, y, 1, 1);
+      }
+      break;
+    }
+    case 'metallic': {
+      // Repeating diagonal highlight/shadow band, purely a function of
+      // (x - y) — reads as a sheen catching the light across a reflective
+      // metal surface. No hash needed here: the geometry itself is the
+      // stable, position-seeded pattern.
+      const period = 12;
+      const pos = (((x - y) % period) + period) % period;
+      if (pos < 2) {
+        fxCtx.globalCompositeOperation = 'lighter';
+        fxCtx.fillStyle = 'rgba(255,255,255,0.22)';
+        fxCtx.fillRect(x, y, 1, 1);
+      } else if (pos > period - 3) {
+        fxCtx.globalCompositeOperation = 'source-over';
+        fxCtx.fillStyle = 'rgba(0,0,0,0.12)';
+        fxCtx.fillRect(x, y, 1, 1);
+      }
+      break;
+    }
+    case 'brick': {
+      // Mortar-line grid with alternating row offset (a real running brick
+      // bond) — reads as a BUILT structure, deliberately distinct from
+      // Stone's natural rock chunks even though both are similar grey.
+      const brickW = 6, brickH = 3;
+      const row = (y / brickH) | 0;
+      const offsetX = (row % 2) * (brickW >> 1);
+      const lx = ((x + offsetX) % brickW + brickW) % brickW;
+      const ly = y % brickH;
+      if (lx === 0 || ly === 0) {
+        fxCtx.globalCompositeOperation = 'source-over';
+        fxCtx.fillStyle = 'rgba(15,15,20,0.35)';
+        fxCtx.fillRect(x, y, 1, 1);
+      }
+      break;
+    }
+    case 'crystal': {
+      // Sparse faceted sparkle points at stable, hash-picked positions.
+      const h = texHash(x, y, 91);
+      if (h > 0.93) {
+        fxCtx.globalCompositeOperation = 'lighter';
+        fxCtx.fillStyle = 'rgba(255,255,255,0.55)';
+        fxCtx.fillRect(x, y, 1, 1);
+      } else if (h < 0.06) {
+        fxCtx.globalCompositeOperation = 'source-over';
+        fxCtx.fillStyle = 'rgba(0,0,0,0.15)';
+        fxCtx.fillRect(x, y, 1, 1);
+      }
+      break;
+    }
+  }
+}
+
 // ---------- one fused pass: backdrop + edge shading + glow + wet-look + particle spawns ----------
 // All these cosmetic layers read the same per-cell data, so they share a
 // single grid.length scan instead of several separate ones — still
@@ -176,6 +282,12 @@ function scanAndEmit(night) {
         fxCtx.fillRect(x, y, 1, 1);
       }
     }
+
+    // Phase 4.6 material textures — data-driven via elements.js's `texture`
+    // field. Placed before the Wall early-continue below so Wall's own
+    // `brick` texture still renders (Wall has nothing else to draw after
+    // this point anyway — no glow/particle/wet-look fields).
+    if (el.texture) drawTexture(x, y, el);
 
     if (id === E.WALL) { wasFalling[i] = 0; continue; } // walls get shading above, nothing below
 

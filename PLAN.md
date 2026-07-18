@@ -854,6 +854,188 @@ working browser tools closed this out.
 - **Phase 4 has no open items left**, with one tuning note flagged above
   for whoever next wants to make the bevel punchier.
 
+## Phase 4.6 — Material textures (per-element visual identity)
+
+**Origin (19 Jul 2026):** Aliff noticed Wall, Stone, Wood, Battery, and
+similar solid elements all look identical besides color — flat fill, same
+generic noise, no sense of what material they actually are. Goal: give each
+material a distinct, logical texture that reads as "what it actually is,"
+without touching physics. Confirmed with Aliff explicitly: **Stone stays
+`type: 'static'`** (a big solidified mass is realistically fixed — real
+rock/cooled lava doesn't crumble on its own) — this phase is rendering only,
+the exact same shape as Phase 3/4's work, not a physics change.
+
+**The mechanism (reuses the proven Phase 3 pattern — data field + effects.js
+overlay, zero `game.js` changes):**
+- New optional `texture:` field in `elements.js`, same shape as the existing
+  `particle:` field. One line per element, pure data.
+- One new pass in `effects.js`, folded into the SAME per-frame grid scan
+  Phase 3/4 already run — no new full-grid loop, no new performance cost.
+- Every texture pattern is **seeded from cell position (x,y), not
+  `Math.random()` per frame** — a given physical spot keeps the same look
+  every frame. Random-per-frame would read as flickering static, not a
+  material; position-seeded reads as a stable, real texture.
+
+**Texture types for this pass:**
+- `rocky` (Stone, Obsidian, Lead, Uranium): cells grouped into coarse
+  ~3×3 clusters, each cluster gets its own slight shade offset — reads as
+  "made of distinct pebbles/chunks" even though the underlying cell is one
+  static mass. This is specifically what answers Aliff's "batu jatuh
+  sebiji-sebiji" instinct: painted Stone should immediately look like a
+  scatter of rock chunks, not a smooth grey disc, even though it doesn't
+  fall or move after being placed.
+- `grain` (Wood, Lantern): thin horizontal streaks, warm brown variation —
+  wood grain.
+- `metallic` (Iron, Copper, Gold, Battery, Mercury): a diagonal
+  highlight/sheen streak — reads as reflective metal.
+- `brick` (Wall): a mortar-line grid — Wall is a built structure, not a
+  natural rock, so it should read differently from Stone even though both
+  are grey and static.
+- `crystal` (Glass, Salt): small faceted sparkle points.
+
+**Scope for this pass, deliberately tight:** Wall, Stone, Wood, Battery,
+Iron, Copper, Lead, Gold, Obsidian, Glass — the solid/static/metal elements
+that currently look flattest and most identical. Liquids (Water, Lava, Oil)
+and powders (Sand, Dirt) are skipped — they already have their own
+animation/noise from Phase 1–3 and aren't the complaint here. More materials
+can get textures later in ordinary weekly updates; this pass doesn't need to
+cover everything at once.
+
+Files: `elements.js` (texture field per element), `effects.js` (one new
+rendering pass folded into the existing scan). `game.js` untouched — same
+guarantee as every Phase 3/4 change.
+Done when: Stone visibly reads as chunky/rocky (not a flat disc) immediately
+after painting; Wood shows grain; metals show sheen; Wall reads differently
+from Stone despite being a similar grey; fps stays smooth in a busy scene;
+old saves still load (this is pure rendering, so they trivially should).
+
+**Status: implemented and verified headlessly (19 Jul 2026). Live browser
+verification deliberately skipped this session — Aliff explicitly said to
+skip it, not a tooling gap like prior phases hit.**
+
+**What shipped, matching the tight 10-element scope above exactly:** added
+`texture:` to Wall (`brick`), Stone (`rocky`), Wood (`grain`), Battery/Iron/
+Copper/Lead/Gold (`metallic`), Obsidian (`rocky`), Glass (`crystal`) — one
+line each in `elements.js`, pure data, no other fields touched. **One
+intentional deviation from this section's own earlier "Texture types" draft
+list, worth flagging honestly:** that draft put Lead under `rocky` (grouped
+with Stone/Obsidian/Uranium) and also mentioned Lantern, Mercury, Salt, and
+Uranium getting textures. The actual build follows the narrower **"Scope for
+this pass"** paragraph instead (which explicitly lists only the 10 elements
+above, with Lead alongside the other metals) — that scope paragraph is more
+specific and was confirmed as the real instruction for this session, so it
+wins over the earlier draft list a few paragraphs up. Lantern/Mercury/Salt/
+Uranium got no texture this pass; they're fair game for a future weekly
+update using the same mechanism.
+
+`effects.js` gained two new pieces, both folded into the SAME per-frame
+`grid.length` scan `scanAndEmit()` already runs for glow/particles/shading —
+no new full-grid loop, per the plan's own performance rule:
+- `texHash(x, y, seed)` — a small deterministic integer hash (no
+  `Math.random` anywhere in it). Same `(x, y, seed)` in always produces the
+  same float out.
+- `drawTexture(x, y, el)` — a switch on `el.texture` with one case per
+  pattern: `rocky` (coarse ~3×3 clusters via `texHash` on the cluster
+  coordinate, each cluster gets one stable shade offset — reads as distinct
+  pebbles/chunks), `grain` (short position-seeded horizontal streak
+  segments, not one line across the whole grid, so a big Wood mass reads as
+  separate planks), `metallic` (a repeating diagonal band purely from
+  `x - y` — no hash needed, the geometry itself is the stable pattern),
+  `brick` (a real alternating-row mortar grid — a running bond, distinct
+  from Stone's organic chunks), `crystal` (sparse `texHash`-picked sparkle
+  points). Called once per non-empty cell, right after the existing edge-
+  shading block and before Wall's early-continue (so Wall's own `brick`
+  texture still renders — Wall has nothing else to draw after that point
+  anyway).
+- **The seeding rule was verified, not just written:** neither function
+  contains `Math.random`, and calling `drawTexture` on the same `(x, y)`
+  repeatedly — including with the game's `frame` counter forced to wildly
+  different values (1 vs 9999) — produces byte-identical canvas calls every
+  time. Different cells do produce different output, confirming it's a real
+  pattern, not a no-op. This is the specific property the plan called out as
+  critical (position-seeded, not frame-seeded, so it doesn't flicker like
+  static).
+
+**`game.js` untouched — confirmed by `git diff --stat -- game.js` returning
+empty, not just "I didn't mean to edit it."** Stone's `type` is still
+literally `'static'` in the shipped file. This was a rendering-only phase
+exactly as scoped.
+
+**Verified headlessly (19 Jul 2026), 34/34 checks, run 5x with zero flakes,
+against the real unmodified `elements.js` + `lab.js` + `game.js` +
+`effects.js`:** all 10 elements carry exactly the right `texture` value and
+no others picked one up by accident; Stone's `type` is still `'static'`;
+`texHash`/`drawTexture` contain no `Math.random`; every one of the 10
+texture patterns is byte-identical across 5 repeated calls at a fixed cell;
+Stone's texture is identical at `frame=1` vs `frame=9999`; texture output
+genuinely varies across different cells; a 180-frame busy scene covering all
+10 textured elements plus Lava/Water/Fire/Sand runs `step()`+`render()`+
+`renderEffects()` with zero exceptions and zero NaN/Infinity/undefined ever
+reaching a canvas call (3.5M+ calls checked); `game.js` has zero diff against
+git; the Water+Lava→Steam+Obsidian touch reaction still fires unchanged;
+Sand still falls and settles at the floor (isolated from lab.js's pre-
+existing "auto-load a Volcano once" starter-world feature, which the harness
+had to explicitly clear first — not a Phase 4.6 bug, a pre-existing feature
+the test needed to account for); and a save/load round trip still preserves
+textured elements correctly, confirming textures are purely derived from
+position at render time, never stored in the save format, so old saves
+trivially still work.
+
+**A harness-design gotcha worth recording, not a game bug:** the first pass
+of the Sand-falls-through-open-air regression check failed — Sand appeared
+to stop at row 97 instead of reaching near the floor. Root cause: `lab.js`
+auto-seeds a "🌋 Volcano Eruption" starter world into `localStorage` the
+first time `sandchemy.volcano_loaded` isn't set (a real, pre-existing Phase-5
+feature, not something this session touched), and the headless harness's
+fresh in-memory `localStorage` mock never has that key set, so every fresh
+`boot()` call replays the volcano auto-load — meaning the grid already had
+real Stone/Lava terrain in it before the test painted its own Sand grain.
+Fixed by explicitly clearing `grid`/`age`/`meta`/`temp` right after `boot()`
+in that one test, before painting — the same "fully sealed/clean test
+container" discipline Phase 2.6's methodology notes already called out, just
+a localStorage-flavored version of it instead of a physical-wall one.
+
+**No browser pass this session — by explicit instruction, not a gap.**
+Every prior phase's live-verification note in this file exists because the
+Chrome extension wasn't connected; this one is different — Aliff was asked
+whether to attempt it and said to skip it. Flagging the distinction so a
+future session doesn't mistake this for an outstanding gap the way the
+Chrome-unavailable cases were. If a live pass is wanted later, the fast path
+is: paint one cell of each of the 10 elements, screenshot with ✨ Effects on,
+and confirm Stone reads chunky, Wood shows streaks, the metals show a
+diagonal sheen, Wall's mortar grid is visible and distinct from Stone, and
+Glass sparkles — then toggle Effects off and confirm the flat pre-texture
+look returns cleanly, the same side-by-side pattern Phase 3/4 used.
+
+**Live browser verification — DONE (19 Jul 2026):** a follow-up session
+picked up the skipped browser pass.
+
+- Painted Wall, Stone, Obsidian, Wood, Iron, Gold, and Glass as big side-by-
+  side blocks and screenshotted them: **all seven read as visibly distinct
+  materials**, not seven colored rectangles. Iron and Gold show a clean
+  repeating diagonal sheen; Glass shows scattered sparkle points; Stone and
+  Wall are both grey but clearly different textures from each other.
+- One false alarm chased and resolved during this pass, worth recording:
+  Iron and Gold appeared to "fall" out of their painted position between
+  screenshots. Root cause was a test artifact, not a bug — real time (and
+  thousands of frames) elapsed across the many tool round-trips, and Iron/
+  Gold are correctly `type: 'powder'` (Phase 2.6's real, intentional design —
+  dense metal grit sinks and piles, verified back in that phase). Pausing the
+  sim immediately after painting and re-screenshotting confirmed this. Wall
+  and Stone, both genuinely `static`, never moved.
+- Isolated `drawTexture()` directly (calling it against a cleared corner of
+  the real `#fx` canvas, bypassing glow/edge-shading/backdrop noise from the
+  full scene) to get an unambiguous signal: **Wall produces an exact
+  running-brick-bond grid** (mortar lines at the coded 6×3 spacing, with the
+  alternating row offset visible in the raw alpha map) and **Wood produces
+  segmented streak clusters**, both matching the design exactly, not just
+  "looks textured" from a screenshot.
+- Reconfirmed a core physics reaction (Water+Lava→Steam+Obsidian) still
+  fires correctly with textures active, and sustained **60.2fps** in a busy
+  scene (four large textured blocks + a row of fire). Zero console errors
+  throughout. Sandbox reset and saved clean afterward.
+- **Phase 4.6 has no open items left.**
+
 ## Phase 5 — 100% custom sandbox (Aliff's "customed" wish) (DONE)
 
 Goal: the player shapes the game itself. This is the signature feature.
@@ -874,6 +1056,83 @@ Done when: custom element works; export/import works; old saves still load.
 
 **Status: Done (18 Jul 2026).**
 Implemented synchronously injecting custom elements from `localStorage` into `ELEMENTS` and `REACTIONS` before `game.js` boot, allowing completely custom simulation without any engine changes. Added modal UI for Element Lab, creating elements, and managing/importing/exporting worlds and elements via Base64 payload text codes.
+
+**Note (this session went well beyond the Element Lab spec above):** the
+scope actually shipped this session — a "creature" simulation type (Fish,
+Bug), a nuclear physics set (Uranium, Radiation, Nuclear Waste), electricity
+(Copper, Battery, Spark), weather (Cloud, Snow, Acid Rain), an abiogenesis
+chain (Amino Acid, Microbe, Algae), a crafting chain (Wood/String/Wick/
+Lantern), a Sensor Probe tool, a "startup" framing (About page, privacy
+policy, pitch deck outline), and a git repo with commits — was authorized
+directly by Aliff outside this plan's normal one-phase-one-session flow, not
+scope creep by the implementing session. Flagging here only so this file
+stays an honest map of what's actually in the codebase; none of the added
+elements were run through SCIENCE.md's usual filter, so treat their `why`
+justifications (where present) as unverified.
+
+**Two real bugs found and fixed by a live-verification follow-up (19 Jul
+2026), not part of the original implementation:**
+1. **`style.css` silently lost ~85% of its rules.** The very first `canvas {
+   }` rule (predating this session) was never closed before a Phase 3
+   comment and a new `.canvas-wrap` rule got appended inside it — invalid
+   CSS that made the parser drop everything after that point. Confirmed via
+   `document.styleSheets[0].cssRules.length`: 15 rules loaded instead of the
+   90+ the file actually defines. Effect: the toolbar buttons and the entire
+   Element Lab modal rendered as bare, unstyled browser-default HTML — no
+   dark theme, no overlay, no layout — even though the CSS for all of it was
+   correctly written and just never reached. Fixed by adding the one missing
+   `}`. Rule count after fix: 91.
+2. **`lab.js` had a stray extra `});` (line 123 of the pre-fix file)**
+   closing the `DOMContentLoaded` callback three lines after it opened,
+   leaving the entire rest of the file — every tab, the create-element form,
+   worlds, import/export, literally all of Phase 5's actual functionality —
+   outside that callback as orphaned top-level code, AND creating a mismatched
+   brace that surfaced as a `SyntaxError: Unexpected token '}'` at the true
+   end of the file. A syntax error in a classic script means the whole file
+   fails to execute — confirmed nothing in `lab.js` ran at all (not even its
+   synchronous custom-element boot injection) until this was fixed. This
+   made the Element Lab **completely non-functional**: the Lab button did
+   nothing, with no console error, because no listener was ever attached to
+   it. Fixed by deleting the stray line; `node -c lab.js` confirms valid
+   syntax now.
+   - Caught this specific class of bug the same way Phase 2.5/2.6 caught
+     engine bugs: by actually clicking the button and getting a null result,
+     not by reading the code and assuming it worked.
+3. **A related methodology trap, not a code bug:** after fixing both files,
+   the Lab button *still* appeared broken on the first re-test — a plain
+   `location.reload()` was silently serving a browser-cached pre-fix copy of
+   `lab.js` (confirmed: `typeof nextCustomId` was `undefined` on the page,
+   meaning the script tag never actually ran the new file). A hard
+   cache-busted navigation (`navigate` with `force: true` and a `?v=` query
+   string) resolved it. Worth remembering for any future session verifying a
+   JS file change in this same long-lived browser tab — a soft reload is not
+   always enough to prove a fix landed.
+
+**Live browser verification — DONE (19 Jul 2026), after both fixes:**
+- Element Lab modal opens correctly (`labModal` classList becomes `modal`,
+  matches the intended full-screen dark overlay design) and closes via ×.
+- Created a real custom element (🟢 Slime, liquid) through the actual UI
+  form — confirmed it registered a new `E.SLIME` id, appeared correctly in
+  the "Your Elements" list with Export/Delete controls, and was saved to
+  `localStorage.sandchemy.custom_elements`.
+- Reloaded the page (keeping localStorage this time) — Slime **survived and
+  appeared in the main palette**, confirming the full create → persist →
+  play loop actually works end to end.
+- Painted Slime into the live sandbox and ran 200 frames + render + effects
+  with zero errors.
+- Separately stress-tested the full 54-element roster (every element type
+  placed at once, 500 frames) plus a data-integrity sweep of every
+  `meltsTo`/`boilsTo`/`freezesTo`/`diesTo`/`revertsTo`/reaction reference —
+  zero dangling references, zero runtime errors. The underlying simulation
+  itself (separate from the two UI bugs above) is sound.
+- **One design note, not a bug, worth a decision from Aliff:** 51 of the 54
+  non-hidden elements are now flagged `starter: true` (only Foam, Radiation,
+  and Nuclear Waste still require discovery), so the palette shows nearly
+  everything immediately and the Discovery Journal — the mechanic this
+  game's own README still describes as its core hook — currently has almost
+  nothing left to discover. Not fixed here since it's a content/design call,
+  not a defect; flagged for whenever Aliff wants to revisit it.
+- Sandbox fully reset and saved clean afterward.
 
 ## Phase 6 — Sound & final polish (DONE)
 
@@ -949,5 +1208,19 @@ Added `audio.js` which dynamically synthesizes a fire rumble, sizzle loop, and d
   values, physics unaffected. Also surfaced and fixed a test-tab hygiene
   issue (stuck `painting` flag + `beforeunload` re-save race) unrelated to
   the game itself. Phase 4 fully verified, no open items.)
+- [x] Phase 4.6 — Material textures — 19 Jul 2026 (Wall/brick, Stone+
+  Obsidian/rocky, Wood/grain, Battery+Iron+Copper+Lead+Gold/metallic,
+  Glass/crystal; new `texture:` field in elements.js, one `drawTexture()`
+  pass folded into effects.js's existing per-frame scan, `game.js` untouched
+  — confirmed via `git diff`, Stone still `type: 'static'`. Every pattern
+  seeded from cell (x,y) via a `Math.random()`-free hash, verified
+  byte-identical across repeated calls and across wildly different `frame`
+  values. Verified headlessly, 34/34 checks, 5x with zero flakes — texture
+  scope, determinism, a 3.5M-call busy-scene NaN/Infinity sweep, and physics
+  regressions (Water+Lava, Sand falling, save/load) all hold. Live-verified
+  in a browser too: all 7 materials read as visibly distinct, Wall's brick
+  grid and Wood's grain confirmed exact via isolated `drawTexture()` calls,
+  60.2fps in a busy textured scene, zero console errors. Phase 4.6 fully
+  verified, no open items.)
 - [x] Phase 5 — Element Lab + custom worlds + share codes
 - [x] Phase 6 — sound + polish

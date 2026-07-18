@@ -119,8 +119,6 @@ window.addEventListener('DOMContentLoaded', () => {
     populateReactionDropdowns();
   });
   closeLabBtn.addEventListener('click', () => labModal.classList.add('hidden'));
-  
-  });
 
   // --- CUSTOM ELEMENTS LOGIC ---
   let reactionCount = 0;

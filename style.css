@@ -72,6 +72,7 @@ canvas {
   touch-action: none;
   max-width: 100%;
   height: auto;
+}
 /* Phase 3: #fx is a second canvas stacked exactly on top of #world, drawn
    by effects.js only (glow/particles/shimmer) — the sim canvas underneath
    is completely untouched by any of it. */
