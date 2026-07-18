@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sandchemy — discover elements by playing</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>⚗️ Sandchemy</h1>
+    <div class="tagline">Pour, burn, freeze — discover new elements by experimenting</div>
+    <div class="counter" id="counter">0 / 7 discovered</div>
+  </header>
+
+  <main>
+    <section class="play-area">
+      <div class="palette" id="palette"></div>
+      <div class="canvas-wrap">
+        <canvas id="world" width="720" height="480"></canvas>
+        <canvas id="fx"></canvas>
+      </div>
+      <div class="toolbar">
+        <label class="brush-label">Brush
+          <input type="range" id="brush" min="1" max="10" value="4">
+        </label>
+        <button id="undoBtn" title="Undo last brush stroke">↩️ Undo</button>
+        <button id="redoBtn" title="Redo brush stroke">↪️ Redo</button>
+        <button id="probeBtn" title="Toggle Sensor Probe">🔍 Probe</button>
+        <button id="pauseBtn" title="Pause / resume the simulation">⏸ Pause</button>
+        <button id="clearBtn" title="Clear the whole sandbox">🧹 Clear</button>
+        <button id="fxBtn" title="Toggle glow/particles/shimmer — also an fps escape hatch if things feel slow">✨ Effects</button>
+        <button id="labBtn" title="Create custom elements and manage worlds">🧪 Lab</button>
+        <button id="muteBtn" title="Mute/Unmute sound">🔊 Mute</button>
+        <button id="resetBtn" title="Factory reset all data">⚠️ Reset</button>
+      </div>
+      <div class="hint">Tip: try pouring <b>water</b> on <b>lava</b>… 👀</div>
+      
+      <div id="sensorHUD" class="sensor-hud hidden">
+        <div class="sensor-title">🔍 Probe Data</div>
+        <div class="sensor-row">Element: <span id="sEl">--</span></div>
+        <div class="sensor-row">State: <span id="sState">--</span></div>
+        <div class="sensor-row">Temp: <span id="sTemp">--</span>°C</div>
+      </div>
+    </section>
+
+    <aside class="journal">
+      <h2>📖 Discovery Journal</h2>
+      <p class="journal-sub">Your experiments are recorded here automatically.</p>
+      <ul id="journalList"></ul>
+    </aside>
+  </main>
+
+  <div id="labModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🧪 Element Lab</h2>
+        <button id="closeLabBtn" class="close-btn">×</button>
+      </div>
+      <div class="modal-tabs">
+        <button id="tabElements" class="tab-btn active">Elements</button>
+        <button id="tabScenarios" class="tab-btn">Scenarios</button>
+        <button id="tabWorlds" class="tab-btn">Worlds</button>
+      </div>
+      
+      <div id="paneElements" class="tab-pane active">
+        <div class="split-pane">
+          <div class="pane-left">
+            <h3>Create Element</h3>
+            <form id="createElementForm">
+              <div class="form-row">
+                <label>Emoji <input type="text" id="ceEmoji" required maxlength="2" placeholder="🧪"></label>
+                <label>Name <input type="text" id="ceName" required placeholder="Acid"></label>
+              </div>
+              <div class="form-row">
+                <label>Color <input type="color" id="ceColor" value="#50ff50"></label>
+                <label>Type 
+                  <select id="ceType">
+                    <option value="powder">Powder</option>
+                    <option value="liquid" selected>Liquid</option>
+                    <option value="gas">Gas</option>
+                    <option value="static">Static</option>
+                  </select>
+                </label>
+              </div>
+              
+              <details class="advanced-physics">
+                <summary>Advanced Physics (Optional)</summary>
+                <div class="form-row">
+                  <label>Density (kg/m³) <input type="number" id="ceDensity" placeholder="Auto"></label>
+                  <label>Heat Emit (°C) <input type="number" id="ceHeatEmit" placeholder="0"></label>
+                  <label>Ignites At (°C) <input type="number" id="ceIgnitesAt" placeholder="None"></label>
+                </div>
+                <div class="form-row physics-row">
+                  <label>Melts At (°C) <input type="number" id="ceMeltsAt" placeholder="None"></label>
+                  <label>Melts To <select id="ceMeltsTo"><option value="">None</option></select></label>
+                </div>
+                <div class="form-row physics-row">
+                  <label>Freezes At (°C) <input type="number" id="ceFreezesAt" placeholder="None"></label>
+                  <label>Freezes To <select id="ceFreezesTo"><option value="">None</option></select></label>
+                </div>
+                <div class="form-row physics-row">
+                  <label>Boils At (°C) <input type="number" id="ceBoilsAt" placeholder="None"></label>
+                  <label>Boils To <select id="ceBoilsTo"><option value="">None</option></select></label>
+                </div>
+              </details>
+              
+              <div class="reactions-header">
+                <h4>Reactions (Max 3)</h4>
+                <button type="button" id="addReactionBtn" class="small-btn">+ Add Reaction</button>
+              </div>
+              <div id="reactionsList"></div>
+              <button type="submit" class="primary-btn submit-btn">Create Custom Element</button>
+            </form>
+          </div>
+          <div class="pane-right">
+            <h3>Your Elements</h3>
+            <ul id="customElementsList" class="item-list"></ul>
+            <div class="import-section">
+              <input type="text" id="importElementData" placeholder="Paste element code...">
+              <button id="importElementBtn" class="small-btn">Import</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="paneScenarios" class="tab-pane hidden">
+        <div class="scenarios-container">
+          <h3>Pre-built Educational Scenarios</h3>
+          <p>Load these curated lesson plans to observe scientific principles in action.</p>
+          <div class="scenario-grid" id="scenariosGrid">
+            <!-- Populated by lab.js -->
+          </div>
+        </div>
+      </div>
+
+      <div id="paneWorlds" class="tab-pane hidden">
+        <div class="split-pane">
+          <div class="pane-left">
+            <h3>Save Current World</h3>
+            <div class="form-row world-save-row">
+              <input type="text" id="worldNameInput" placeholder="World Name">
+              <button id="saveWorldBtn" class="primary-btn">Save</button>
+            </div>
+            <h3 style="margin-top: 20px;">Your Worlds</h3>
+            <ul id="worldsList" class="item-list"></ul>
+          </div>
+          <div class="pane-right">
+            <h3>Import World</h3>
+            <textarea id="importWorldData" rows="6" placeholder="Paste world code here..."></textarea>
+            <button id="importWorldBtn" class="small-btn" style="margin-top: 5px;">Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="elements.js"></script>
+  <script src="lab.js"></script>
+  <script src="game.js"></script>
+  <script src="effects.js"></script>
+  <script src="audio.js"></script>
+</body>
+</html>

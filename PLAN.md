@@ -1,0 +1,953 @@
+# Sandchemy — Master Plan to "Perfect Custom Sandbox"
+
+> **For any Claude/Cowork session picking this up:** read this file + README.md
+> first. Do ONE phase per session, in order. Do not start a phase until the
+> previous one is done and verified in the browser. Keep the golden rule:
+> content = data in `elements.js`, engine = `game.js`. Never break that split.
+>
+> **Preview gotcha (macOS):** the preview server cannot read ~/Documents.
+> After editing, rsync this folder to the session scratchpad and serve from
+> there (see the `sandchemy` entry pattern in `Documents/.claude/launch.json`).
+
+**Vision (Aliff's words):** perfect, 100% custom sandbox. Logically smart —
+reactions should feel real. Visuals so good it feels alive ("3D feel").
+Weekly small updates, never overwhelming, easy to maintain, zero servers,
+zero data leaving the device.
+
+**Honest scoping decision (agreed 17 Jul 2026):** NO true 3D rewrite — that
+would mean a new engine and permanent complexity. Instead: real physics +
+lighting + particles on the existing 2D engine ("2.5D"). This is how Noita
+and Terraria feel alive. If after Phase 4 Aliff still wants true 3D, that is
+a NEW project, not an update to this one.
+
+---
+
+## Phase 1 — Fix the chemistry (make every reaction defensible)
+
+Goal: every recipe in the game can be explained in one sentence of real logic.
+
+- Add **Dirt** 🟫 as a starter element (powder, dark brown).
+- Fix mud: `Dirt + Water → Mud` (real). Remove `Sand + Water → Mud`;
+  sand + water now just darkens the sand color slightly (wet look, no new element).
+- Seeds only sprout on Mud or Dirt (+ water nearby), not in plain water.
+- Add `Water + Ice → Ice` at very low probability (water slowly freezes when
+  touching ice) — cap it so it can't snowball across the whole map.
+- Add **Stone** 🪨 (discoverable): lava that touches air long enough cools to
+  Stone; lava quenched by water still makes Obsidian (fast cooling = glassy —
+  real volcanology).
+- Update journal totals automatically (already data-driven — verify only).
+
+Files: `elements.js` only (plus README changelog).
+Done when: all new/changed recipes verified in browser; old saves still load.
+
+**Note (done 17 Jul 2026):** two tiny *generic* engine hooks had to go into
+`game.js` too — the engine's touch-reaction system can't react with an EMPTY
+(air) cell, and had no way to change a cell's look without changing its id.
+Added: `coolsTo`/`coolChance` (any element can slowly turn into another when
+touching open air — used by Lava→Stone) and a `wets: true` reaction flag
+(cosmetic-only, just darkens a cell, no id change — used by Sand+Water).
+Both are reusable data-driven hooks, not element-specific hardcoding, so the
+golden rule (content lives in `elements.js`) still holds. Seed sprouting
+needed zero engine changes: Dirt only becomes Mud when water is nearby, and
+Seed+Mud is the only sprout rule left, so "dirt + water nearby" sprouting
+happens automatically through Mud.
+
+**Browser verification (done 17 Jul 2026, follow-up session):** the session
+that made the Phase 1 changes couldn't drive an actual browser (no Chrome
+extension connected), so it verified with a headless engine harness only.
+A follow-up session with working browser tools loaded the real page fresh,
+cleared localStorage, and painted every scenario directly onto the live grid:
+Dirt+Water→Mud confirmed, Sand+Water confirmed wet-look-only (28 wet cells,
+0 spurious Mud), a seed sitting in plain water never sprouted, the same seed
+touching Mud sprouted into a full plant, Lava sealed touching open air cooled
+to Stone ("Lava + Air"), Lava+Water still produced Obsidian, and Sand+Lava
+still produced Glass. Zero console errors at any point. Reloaded the page
+afterward — all 7 discoveries and the world state restored correctly from
+localStorage. Phase 1 is now verified end-to-end, not just headlessly.
+
+## Phase 2 — Temperature layer (the realism engine)
+
+Goal: reactions driven by HEAT, not just touch. This is the one sanctioned
+engine upgrade — do it carefully, keep it simple.
+
+- One extra array: `temp` (per-cell temperature, coarse integer).
+- Hot elements (fire, lava) emit heat to neighbors; heat diffuses and decays.
+- Element data gains optional fields in `elements.js`:
+  `heatEmit`, `meltsAt → id`, `freezesAt → id`, `boilsAt → id`, `ignitesAt`.
+- Convert existing touch-reactions that are really heat effects
+  (ice melting, water boiling, plant igniting) to temperature rules.
+  Keep true chemical reactions (water+lava→obsidian) as touch rules.
+- Payoffs that must work: lava melts ice from a short distance; a wall
+  between fire and ice protects the ice; glass forms only where lava is
+  hottest; water near many fires slowly boils.
+- Performance budget: still 60fps on MacBook Neo (fanless!) — if not, halve
+  the temperature update rate (every 2nd frame) before optimizing anything else.
+
+Files: `game.js` (one-time), `elements.js` (data fields).
+Done when: the 4 payoff scenarios above verified in browser; fps still smooth.
+
+**Status: all 4 payoffs verified LIVE in browser, no open items.** 3/4 were
+confirmed in the first browser follow-up; the 4th (ice-melt-at-distance)
+needed the Phase 2.1 tuning fix, and a second browser follow-up confirmed
+that fix live too — see the verification notes below. Phase 2 is closed.
+
+**Design notes (done 17 Jul 2026):**
+- Kept ALL existing touch reactions (Water+Fire, Ice+Fire, Ice+Lava, Plant+Fire,
+  Plant+Lava) exactly as they were, instead of literally "converting" them.
+  Reasoning: touch = instant contact chemistry (dousing a flame, quenching
+  lava — dramatic, already verified in Phase 1), temperature = NEW radiant
+  physics for things that AREN'T touching (a short distance away). `step()`
+  runs `updateTemperature()` last, after all touch reactions, so direct
+  contact always gets first say and nothing that worked before regressed.
+- `heatEmit` elements (Fire, Lava, cold Ice) always radiate their full heat
+  to neighbors regardless of their own stored temperature — this is what
+  lets a wall fully block conduction (walls are simply excluded from the
+  neighbor average) while letting heat reach genuinely open, unwalled air.
+- `minTemp` on the Sand+Lava→Glass reaction checks the SAND side's own
+  temperature, not lava's — sand has to actually soak up enough heat itself
+  (multiple lava faces, i.e. a real pool) before it glasses; one thin lava
+  droplet touching it once isn't enough. This is the "hottest lava" payoff.
+- Verified headlessly by running the real `elements.js` + `game.js` through
+  a Node harness (24 checks — 7 Phase 1 regressions + 15 new Phase 2 checks
+  covering all 4 required payoffs, plus a busy-grid performance sanity pass
+  at ~6ms/frame in Node, well within a 60fps/16ms budget even before
+  accounting for the browser being faster). No browser session was available
+  this session (Chrome extension not connected) — a follow-up session should
+  do a live visual pass the way Phase 1's follow-up did, and tick that off
+  here if anything looks different from the headless numbers.
+
+**Browser verification (done 17 Jul 2026, follow-up session) — 3/4 confirmed, 1 needs tuning:**
+
+- ✅ **Wall blocks heat** — confirmed cleanly. Lava basin held at ~88° next
+  to a wall; ice on the far side stayed at its own untouched baseline (-10°)
+  the entire time. Wall temp always reads 0 (excluded from the neighbor
+  average, exactly as designed).
+- ✅ **Water boils near several fires without touching** — confirmed. A
+  water pool ringed by fire on all 4 sides (3-4 cell gap, never touching)
+  fully boiled away; journal recorded "Water + Heat", proving it went
+  through the new radiant path, not the old touch reaction.
+- ✅ **Sand only glasses against a real lava mass** — confirmed. A deep
+  15-cell-tall sand-on-lava mass produced Glass; a single sand cell resting
+  on a thin lava trickle did not.
+- ⚠️ **Lava melts ice from a short distance — only works at ~1-cell gap,
+  stalls beyond that, even for a tiny 3-cell ice sample** (not just large
+  ice masses). Root cause has two compounding parts:
+  1. **Open-air averaging is steep.** Each empty cell's new temp is an
+     average of itself and up to 4 neighbors; with 1 hot neighbor and ~3
+     ambient ones, temp drops roughly 4x per cell of gap crossed. Ice melts
+     at t≥3, so in practice the source has to be almost adjacent.
+  2. **Phase 1 and Phase 2 fight each other here.** The lava face exposed to
+     the gap cools to Stone via Phase 1's `coolsTo` rule, and Stone has no
+     `heatEmit` — so the effective heat source physically recedes from the
+     gap over time, on top of the averaging problem above.
+  The reason water-boil passed and ice-melt didn't isn't randomness — it's
+  geometry: the water was surrounded by fire from 4 directions (heat arrives
+  from every side, beating the per-cell averaging), while the ice was only
+  heated from one face. **The engine handles enclosed/surrounding heat well
+  and underperforms on one-directional radiant heat at range.** Confirmed
+  reproducible: identical result across multiple retries and 10+ second
+  waits (steady state, not "just needs more time"). Verified with `temp[]`
+  readings directly, not just visual guessing — see scratch notes below if
+  a future session wants the exact numbers.
+- Performance re-confirmed live in-browser too, separately from the Node
+  numbers above: 60fps sustained on a maximally busy full-grid scene (30%
+  lava / 20% water / 10% ice / 5% fire all reacting at once). Zero console
+  errors under that stress or at any other point in this verification pass.
+
+**Phase 2.1 follow-up — DONE (17 Jul 2026):** fixed the ice-melt-at-distance
+stall.
+
+- `TEMP_DIFFUSE`: 0.5 → **0.9**. `TEMP_DECAY`: 0.996 → **0.999**. Root cause
+  #1 (open-air averaging too steep) turned out to plateau once diffuse
+  crosses ~0.85 — below that, a 3x3 lava pool's open face left ice at only
+  temp 2 two cells away (meltsAt is 3, so it missed by one). Above ~0.85 the
+  same setup reaches temp 12 at 2 cells — comfortably past threshold. Tried
+  push past 1.0 too; no further gain, so settled mid-plateau rather than at
+  the edge.
+- Lava `coolChance`: 0.01 → **0.003**. Root cause #2 (exposed face crusting
+  to heat-dead Stone) was real: at the old rate, melting a 2-cell-away ice
+  target succeeded in only 5/8 trials (the face would sometimes turn to
+  Stone before enough heat got across). At 0.003 it hit 8/8 across repeated
+  trials. Lava still solidifies over time (roughly 3x slower now) — it just
+  doesn't race the melt.
+- **Re-verified everything, not just the fix**, per the warning below this
+  note: all 4 Phase 2 payoffs plus every Phase 1 regression, headlessly
+  against the real engine (22 checks, all passing) — wall-block, glass-needs-
+  2-lava-faces, water-boils-near-many-fires, and the new 2-cell ice-melt all
+  hold simultaneously with the same three constants. No threshold values
+  (`meltsAt`, `boilsAt`, `freezesAt`, `ignitesAt`, `minTemp`) needed to
+  change — only the two global diffusion constants and Lava's `coolChance`.
+- Reach is now genuinely ~2 cells, not unlimited — a 3-cell gap stays at
+  temp 0 in testing. That's an honest "short distance," matching the
+  payoff's own wording; going further would need a different mechanism
+  (multi-step diffusion per frame, or a longer-range kernel) and isn't
+  worth the added complexity for what's still a stylized, sped-up sim.
+**Phase 2.1 live browser verification — DONE (17 Jul 2026):** a follow-up
+session with working browser tools closed the last open item.
+
+- Rebuilt the exact scenario that failed before: lava, a genuine 2-cell air
+  gap, ice — walled on every other side so nothing could physically flow
+  across and invalidate the test. Paused the sim and stepped it manually.
+- **Heat crossed the gap on its own**: the air cell in the gap reached ~48°,
+  the ice face reached 6° — past its 3° melt point — with `lavaEnteredGap:
+  false` confirmed the whole time. This is genuine radiant heat, not a
+  touch reaction sneaking through.
+- Melting started right on cue, then **stalled after ~135 cells** — but this
+  turned out to be correct emergent behavior, not a bug: the melted ice
+  becomes Water, that Water touches the Lava right next to it, and the
+  existing instant touch rule (Water + Lava → Steam + Obsidian) quenches
+  that patch of Lava into Obsidian immediately. Obsidian has no `heatEmit`,
+  so it forms a real insulating crust and the melt front self-arrests —
+  exactly the way a real lava flow crusts over where it meets water or wet
+  ground. Documented as intended behavior, not something to "fix" — it's
+  the kind of one-sentence-of-real-logic result Phase 1's whole premise was
+  chasing.
+- Zero console errors throughout. Sandbox reset clean afterward.
+- **Phase 2 has no open items left.** Both browser follow-ups (this one and
+  the earlier one) plus the headless harnesses all agree.
+
+## Phase 2.5 — Real-world numbers (see SCIENCE.md)
+
+Goal: replace every invented constant with a real, sourced one. Same engine,
+same behaviour shape — accurate values. Full reference table, sources, and
+the task list live in **SCIENCE.md**. Read that file, not this summary.
+
+Short version: temperatures become real °C (water 0/100, lava 1150, wood
+ignites at 300, ambient 25); every element gains a real density, which makes
+ice float on water the way it actually does; lava turns to stone by dropping
+below its real solidus (950°C) instead of a random dice-roll. Explicitly
+NOT a physics-engine rewrite — that was considered and rejected in SCIENCE.md
+for being too fragile to maintain safely.
+
+Files: `elements.js` (most), `game.js` (density/float + a safety clamp).
+Done when: every number matches SCIENCE.md; verified in browser; old saves load.
+
+**Status: done and verified live in a browser (18 Jul 2026), following up on
+the headless pass.** See "Live browser verification" note below the design
+notes — no open items left.
+
+**What changed, matching SCIENCE.md's task list:**
+- Every temperature in `elements.js` is now real °C: Water freezes at 0 /
+  boils at 100, Fire emits 900, Lava emits 1150, Plant/Seed ignite at 300,
+  ambient is 25 (`AMBIENT` in `game.js`).
+- Every element got a real `density` (kg/m³) from SCIENCE.md's table.
+- Ice is `type: 'powder'` now (was `'static'`) and the powder "sink through
+  liquids" check in `game.js` gained a real density comparison
+  (`el.density > belowEl.density`) instead of a flat 25% coin-flip — this is
+  what makes Ice float on Water while Sand still sinks through it.
+- Lava's old `coolsTo`/`coolChance` dice-roll is gone entirely, replaced by a
+  real solidus: `freezesAt: 950 → Stone`, reusing the exact same generic
+  threshold mechanism Water already uses to freeze into Ice. One less special
+  case in the engine, not one more.
+- Added a `SRC_COLD` sentinel alongside the existing `SRC_HEAT` one, so the
+  journal reads "Stone (Lava + Cold)" instead of the confusing "+ Heat" for
+  a cooling-driven conversion.
+- Added the guardrail clamp SCIENCE.md required: `TEMP_MIN`/`TEMP_MAX` on
+  every cell's temperature every tick, so one bad constant in a future weekly
+  update can look wrong, not crash the sim or overflow the buffer.
+- Every `REACTIONS` entry got a one-sentence `why:` field — real-world
+  justification, ready for the journal to show later.
+
+**Three real engine bugs found and fixed empirically (not in SCIENCE.md's
+task list — discovered by actually running the numbers, not just plugging
+them in):**
+1. **Integer truncation stalls threshold crossings.** `temp`/`tempNext` were
+   `Int16Array`. The new real-°C scale needs slow diffusion (sub-1-degree-
+   per-frame is normal for good pacing), and an integer buffer throws away
+   that fractional progress every single frame — a cell can get permanently
+   stuck exactly AT a threshold instead of ever crossing it. Caught this
+   because Ice stalled dead at exactly 0° forever in testing. Fixed by
+   switching both arrays to `Float32Array`.
+2. **Moving cells left their temperature behind.** `trySwapOrMove` (and the
+   new density-sink swap) moved `grid`/`age`/`meta` but never `temp` — so a
+   falling Ice cell would instantly inherit whatever temperature was sitting
+   in the ambient air cell it moved into, putting it on the wrong side of
+   its own melt threshold the instant it moved, regardless of its real
+   temperature a frame earlier. Only surfaced now because Ice actually moves
+   as of this phase (it didn't in Phase 1/2/2.1). Fixed: temperature now
+   travels with the substance on every move/swap.
+3. **`wets` permanently blocked movement.** Sand+Water's cosmetic reaction
+   returned `true` (consuming the cell's turn) every frame once touching —
+   meaning Sand resting on Water could never reach the density-sink check
+   and would float forever instead of sinking. Fixed by having it return
+   `false` (still applies the cosmetic darkening, just doesn't block the
+   cell's turn anymore).
+- These were caught by building the same kind of controlled Node-vm test
+  scenarios as Phase 2.1 (walled rooms, pinned/anchored cells so nothing can
+  physically drift and invalidate a "not touching" test) and watching the
+  actual numbers, not by reading the code and assuming it worked.
+
+**One deliberate, documented deviation from SCIENCE.md's literal table:**
+Ice's `heatEmit` is **-40**, not the literal 0°C the table lists ("ice sits
+at its melting point"). Sitting exactly AT its own melt threshold with
+ambient at 25° means even a sliver of diffusion pushes it over instantly —
+confirmed empirically (it melted the same frame it was placed, at every
+diffusion rate tried). -40 gives it real headroom: it survives a normal
+scene for dozens of frames, and a lava/fire source measurably speeds up its
+melting (confirmed: ~5-8% faster near lava through a real, non-touching gap
+than sitting in plain air), without flash-melting on placement.
+
+**A real, honest side-effect worth knowing about, not hidden:** because
+ambient (25°) is now realistically ABOVE Ice's melting point (0°), Ice is no
+longer eternal once placed — it slowly melts even in plain open air over
+time, the way real ice actually does at room temperature. Under the old
+invented 0-ambient scale this couldn't happen (ambient sat below the melt
+threshold, so decay pulled temperature away from melting, not toward it).
+This is physically correct and turns Ice from "permanent building material"
+into more of a "use it before it melts" resource — a real behavior-shape
+change from Phase 1/2/2.1, not a bug, and one Aliff should know about before
+calling this "same behaviour shape, real values" the way SCIENCE.md framed
+the goal. Lava proximity still meaningfully speeds this up, so the "melts
+faster near heat" payoff holds — it's the "melts even with no heat" part
+that's new.
+
+**Constants landed on, via the same empirical sweep-and-measure methodology
+as Phase 2.1** (Node-vm scenarios, walled/pinned so nothing can physically
+touch and invalidate a radiant-only test): `TEMP_DIFFUSE` **0.02**,
+`TEMP_DECAY` **0.995** (both much smaller than Phase 2.1's 0.9/0.999 — the
+new scale's numbers are ~15-40x bigger, so much gentler per-frame pulls are
+needed for comparable pacing). Sand+Lava's `minTemp` **400** (a thin lava
+trickle peaks around 184° before its own exposed face crusts to Stone and
+stops radiating; a real lava pool blows past 400° and keeps climbing for as
+long as it stays a pool — 400 cleanly separates the two, same design intent
+as before: sand needs a real mass, not a trickle).
+
+**Verified headlessly (18 Jul 2026), 27/27 checks, against the real
+unmodified `elements.js` + `game.js`:** all 6 Phase 1 regressions; wall
+fully blocks radiant heat; Sand+Lava minTemp correctly separates a real pool
+(glasses) from a thin trickle (never does); water boils radiantly near fire
+without touching; ice melts from a real, walled, non-touching gap near lava
+(and does so measurably faster than plain ambient exposure); Water's
+freezesAt/boilsAt match 0/100 and ambient is 25; Ice floats on a water pool
+instead of sinking through it while Sand sinks through the same pool to the
+bottom; Lava crusts to Stone via the real solidus rule (not the old
+coolChance) and the discovery reads "+ Cold"; an intentionally-absurd
+constant doesn't crash the sim, produce NaN, or escape the clamp range; and
+an old-format save (grid ids only, no temp data — exactly what
+pre-Phase-2.5 saves look like) loads and runs without crashing, with Ice
+surviving its first tick instead of instant-melting.
+
+**Live browser verification — DONE (18 Jul 2026):** a follow-up session with
+working browser tools closed this out.
+
+- **Density/buoyancy confirmed, but only after ruling out a false alarm.**
+  First attempt (an unwalled water rectangle) showed Ice sinking in lockstep
+  with Sand — looked exactly like a broken density check. Root-caused with
+  `Math.random` pinned and `trySwapOrMove` instrumented: the water body had
+  no containing walls, so it was draining/spreading into open space on its
+  own, and Ice was legitimately free-falling through the real vacancies that
+  created — not a density bug, a test-setup bug. Rebuilt with a fully walled
+  container: Sand correctly sinks to the floor; Ice, with melting pinned off
+  to isolate pure buoyancy, sits stably on the water surface indefinitely and
+  never sinks through it. The density comparison itself is sound.
+- **In realistic (non-pinned) conditions, Ice melts before a player can
+  really watch it float** — confirmed, not contradicted, by this test: Ice
+  dropped from above warms from -40° to -4° just falling through open air
+  (~40 frames, diffusion pulling it toward the 25° ambient every frame it's
+  airborne), then crosses its 0° melt point within another ~10 frames of
+  touching water. Total survival from placement to melt: roughly 50 frames,
+  under a second at 60fps. This matches the "dozens of frames" the headless
+  pass predicted — not a new problem, but worth being explicit: a player who
+  drops Ice into a water pool will see it sink slightly and vanish quickly
+  rather than clearly float. The buoyancy code is correct; the *visibility*
+  of that payoff is what's marginal. If Ice feels like it never gets to show
+  off floating, the fix is tuning (colder `heatEmit`, e.g. -60 to -80, or a
+  smaller `TEMP_DIFFUSE` specifically for airborne cells), not a redesign —
+  flagged here for whoever picks up Phase 3 polish or revisits pacing.
+- **Lava solidus confirmed**: a 300-cell lava pool exposed to open air had
+  218 cells cross 950° into Stone within 600 frames while 82 stayed molten —
+  the crust forms first and insulates the interior, the same way a real lava
+  flow behaves.
+- **Old-save compatibility confirmed**: wrote a save containing only grid
+  ids (no temp array, exactly what every pre-Phase-2.5 save looks like),
+  reloaded through the real boot sequence, and every cell — Water, Lava, Ice
+  alike — correctly seeded its resting temperature (25°, 1150°, -40°) with
+  zero errors across 30 simulated frames.
+- Zero console errors at any point in this pass. Sandbox reset clean afterward.
+- **Phase 2.5 has no open items left.**
+
+## Phase 2.6 — New elements: metals, gases, lightning, salt, oil
+
+Goal: earn eleven new elements against SCIENCE.md's filter ("does something
+you can SEE that nothing already in the game does"). Full shortlist, sources,
+and rationale live in **SCIENCE.md**'s "New elements" section.
+
+**Status: done and verified (18 Jul 2026), headlessly + a real bug fixed.**
+Live browser verification did not happen this session — the Chrome extension
+was not connected (same limitation Phase 1/2 hit before their browser
+follow-ups). Headless verification against the real, unmodified engine is
+thorough (49/49 checks, run 10x in a row for reliability, zero flakes) and
+covers every payoff below with actual grid/temp state, not just code reading
+— but a live pass (paint each new element, watch it react, reload, confirm
+old saves) is still the honest next step before this is 100% closed the way
+Phase 1/2/2.5 eventually were. Noting this here rather than skipping it.
+
+**What shipped, matching SCIENCE.md's shortlist, all in one session rather
+than split across metals/gases/lightning:**
+- **Metals** — Gold (melts at 1064°, Lava reaches ~1150° so it *can* melt
+  it), Iron (melts at 1538°, Lava genuinely *cannot* — the deliberate
+  contrast with Gold), Lead (melts at 327°, an ordinary Fire is enough),
+  Mercury (liquid at room temperature, freezes solid at -39° near Ice).
+- **Gases** — Oxygen (keeps Fire burning longer via a new `refuels`
+  mechanic instead of Fire just aging out on a fixed clock), Hydrogen
+  (rises instantly, Hydrogen + Fire → Water — genuine 2H₂+O₂ chemistry,
+  simplified to a two-body touch reaction), Neon (inert until Lightning
+  hits it, then glows as Glowing Neon and fades back after a timer — same
+  mechanic Steam already used to condense back to Water, generalized).
+- **Lightning** — ~30,000°C, briefly overwhelming, fuses Sand into Glass
+  (real fulgurite chemistry) and excites Neon.
+- **Salt** — dissolves into Water to make Salt Water; Salt Water melts Ice
+  (the actual reason roads get salted before winter storms).
+- **Oil** — density 900, floats on Water; ignites hard on contact with Fire.
+- **Rust** — what Iron slowly becomes near Water (2%/frame touch chance).
+
+**The one deliberate removal:** Sand + Lava → Glass is gone. SCIENCE.md
+flagged it as the game's least defensible recipe (glass needs ~1700°, Lava
+tops out around 1150-1200°, so Lava genuinely cannot glass sand) and named
+Lightning as the intended real fix. Sand + Lightning → Glass replaces it —
+instant, no `minTemp` gate needed, because 30,000° clears any reasonable
+threshold immediately. Confirmed via regression that Sand sitting on a real
+lava pool for 150 frames never becomes Glass anymore.
+
+**Engine changes — two small, generic, precedented hooks, both in `game.js`,
+neither element-specific:**
+1. **`refuels: true`** (new REACTIONS flag, same shape as the existing
+   `wets` flag) — resets a cell's `age` to 0 without changing its id. Used
+   by Fire+Oxygen so Oxygen extends a fire's burn duration instead of Fire
+   aging out on a fixed clock alone. Returns `false` like `wets` does, so
+   touching Fire doesn't freeze Oxygen in place and block it from rising
+   away like a normal gas.
+2. **`revertsTo`/`revertsAfter` generalized** — this used to be a
+   Steam-only hardcoded mechanic ("after 300 frames, Steam becomes Water").
+   Pulled into a generic per-element pair of fields so Glowing Neon's glow
+   can fade back to plain Neon the same way, and any future gas can reuse
+   it. Steam's own behavior is unchanged (still 300 frames back to Water).
+- `TEMP_MAX` raised 5000 → **35000** to give Lightning's 30,000° `heatEmit`
+  headroom inside the guardrail clamp instead of getting silently clipped.
+
+**One real engine bug found and fixed (not a design gap — an actual latent
+bug, likely present since Phase 1):** touch reactions changed a cell's id
+via `aTo`/`bTo` but never reset its `temp[]`. Concretely: cold Ice (-40°)
+touching Lava correctly converts to Water via the touch rule, but kept its
+old -40° reading — which is below Water's own 0° freezing point, so on the
+very same frame's subsequent `updateTemperature()` pass (which runs after
+all touch reactions inside `step()`), that brand-new Water cell immediately
+re-froze back to Ice, invisibly, before any check or the player could ever
+see the intermediate Water state. Found while debugging why Salt Water +
+Ice wasn't reliably melting the Ice side. Confirmed via direct `applyReaction`
+invocation (with `Math.random` pinned) that the conversion logic itself was
+correct in isolation — the bug was specifically the missing temp reset.
+**Fixed** by setting `temp[ci] = restingTemp(rule.aTo)` and same for `cj`
+in the conversion block, reusing the exact `restingTemp()` helper Phase 2.5
+already established for painting/loading/moving. This is the same
+"identity change resets to a sensible resting temperature" principle
+extended to the one remaining code path that didn't have it yet — and it
+retroactively fixes the same latent risk for the pre-existing Ice+Lava and
+Ice+Fire touch reactions too, not just the new Salt Water one.
+
+**Two design findings from testing, not bugs — worth knowing for future
+elements:**
+- **A small lava pool can fail to melt Gold even though "lava can melt
+  gold" is true in general.** Gold has no `heatEmit` of its own (nothing
+  needs it to), so submerged in a small pool it acts as a local heat sink —
+  its immediate Lava neighbors can cool below their own 950° solidus via
+  mutual diffusion and convert to heat-dead Stone, isolating Gold from
+  further heat before it reaches 1064°. A large/deep pool (9x9 in testing)
+  has enough thermal mass to push through regardless. Not fixed — this is
+  correct emergent behavior in the same family as the Phase 2.1 "melt front
+  crusts over and self-arrests" finding, and the regression test now uses a
+  large pool to reflect a "real lava mass," matching SCIENCE.md's own
+  phrasing.
+- **Mercury only freezes on direct contact with Ice, not from a short
+  distance the way Lava melts Ice.** Mercury's freeze gap (25° ambient to
+  -39°, a 64° span) is far smaller in absolute terms than Lava's melt gap
+  (25° to 1064°+, over 1000°). The same diffuse/decay constants that carry
+  Lava's huge differential meaningfully through a multi-cell gap don't move
+  Mercury's much smaller one far enough before ambient decay wins. Matches
+  SCIENCE.md's own modest phrasing for Mercury ("chill it with ice," not
+  "from a distance") — not a bug, just a smaller effective reach.
+
+**Verified headlessly, 49/49 checks, against the real unmodified `elements.js`
++ `game.js`, run 10 times in a row with zero flakes:** every Phase 1/2/2.1/2.5
+regression still holds; Sand+Lava is gone and Sand+Lightning→Glass fires
+instantly; Gold melts in a large lava mass while Iron (no `meltsAt` at all)
+never does; Lead melts via ordinary Fire; Mercury freezes touching Ice;
+Oxygen measurably extends Fire's lifespan; Hydrogen+Fire→Water; Neon+
+Lightning→Glowing Neon, which fades back to Neon within its timer; Salt
+dissolves into Salt Water, which melts Ice on contact; Oil floats on Water
+and ignites on contact with Fire; Iron rusts near Water; the guardrail clamp
+holds with the new 35000 ceiling and comfortably fits Lightning's heatEmit;
+the touch-reaction temp-reset fix holds (Ice+Lava becomes Water and stays
+Water, no same-frame refreeze flicker); and a save containing only pre-2.6
+element ids (0-15) still loads and runs with zero errors.
+
+**One test-suite bug found and fixed along the way (not an engine bug):** a
+handful of the new regression blocks called `step()` without first seeding
+`temp[]` via `initTemp()`, defaulting the whole grid to temp 0. For most
+tests this didn't matter, but the Salt Water + Ice test sat two elements
+right near zero-adjacent thresholds (Salt Water freezes at -10°, Ice melts
+at 0°) — starting from an uninitialized 0° created a genuine race between
+the touch reaction and Ice's own radiant cold pulling Salt Water below its
+freeze point first, making the test fail roughly 4 times out of 5. Fixed by
+adding `initTemp(sb)` to every Phase 2.6 test block for consistency with the
+rest of the suite; 10 consecutive full-suite runs afterward all passed
+49/49 with no failures.
+
+**Live browser verification — DONE (18 Jul 2026):** a follow-up session with
+working browser tools closed this out. Every headline payoff confirmed:
+
+- **Gold vs Iron** — same lava pool (~1150°): Gold fully melted to Molten
+  Gold, Iron stayed solid Iron through 400 frames. The core payoff, working
+  exactly as designed.
+- **Lead** melts readily given real sustained contact with heat (confirmed
+  in a sealed lava pocket — reached 1000°+ and melted well past its 327°
+  point). **Oxygen** confirmed genuinely extending Fire's life: an
+  oxygen-packed fire was still burning at frame 50 while an identical,
+  unfed control fire (same box, no oxygen) had already died by frame 40.
+- **Hydrogen + Fire → Water** confirmed frame-by-frame, and it chains into
+  something genuinely charming: the instant the new Water appears next to
+  the still-burning Fire, the *existing* Water+Fire→Steam rule fires on it
+  immediately after — real emergent complexity from two simple rules
+  composing, not a special case written for Hydrogen.
+- **Mercury**: liquid at rest at room temperature (confirmed), freezes solid
+  when properly sealed against Ice (confirmed). **Oil** floats on Water
+  indefinitely once the test container is actually sealed (see below).
+  **Salt Water melting Ice**, **Salt dissolving into Water**, and **Iron
+  rusting near Water** all confirmed via aggregate element counts.
+  **Glowing Neon** fades back to plain Neon at exactly frame 151
+  (`revertsAfter: 150`, so age must exceed it) — timer confirmed exact.
+- Zero console errors at any point. Sandbox reset clean afterward.
+
+**A methodology finding worth keeping, not a bug in the game:** the first
+attempt at several of these tests (Oil-floats, Mercury-freezes,
+Salt-Water-melts-Ice) gave results that looked like real bugs — Oil sinking
+straight through water, Mercury sinking in lockstep with Ice, Salt Water and
+Ice sitting side by side for 10 frames without ever reacting. Every single
+one turned out to be the same root cause: **an unsealed test container lets
+things drift, drain, or fall away from each other before the interaction can
+be observed** — not a flaw in the density, reaction, or temperature code.
+The falling-sand engine processes rows in an alternating left-right/
+right-left sweep each frame, so two adjacent *mobile* cells (both still
+falling, neither landed yet) can occasionally "dodge" a same-frame reaction
+check if one moves away a half-step before the sweep reaches the other —
+confirmed harmless once both cells settle, since the check just retries
+every subsequent frame. **Any future browser test of a new reaction or
+density interaction should fully wall the test container on all sides
+(floor + both walls, sized tight to the contents) before concluding anything
+from the result** — this cost real time to re-discover three times in this
+one pass alone.
+
+## Phase 2.7 — Acid (optional, no fixed slot, see SCIENCE.md)
+
+Goal: answer Aliff's "make Erase feel less like magic delete" idea properly —
+not by touching the Erase button (it stays; every sandbox needs a plain way
+to clear the canvas), but by adding one real substance that destroys things
+through genuine chemistry. Full spec, the two reactions, and the two
+deliberate non-reactions (Gold and Glass both resist Acid, for real reasons)
+are in **SCIENCE.md**'s "Acid" section — read that, not this summary.
+
+Short version: Acid (liquid, density 1840) dissolves Iron and releases real
+Hydrogen gas (which can then drift to a flame and become Water — chains
+into Phase 2.6's existing Hydrogen for free), and slowly dissolves Stone.
+It deliberately does nothing to Gold (mirrors the Gold/Iron Lava contrast
+from Phase 2.6 with a completely different mechanism — same conclusion) or
+Glass (true of ordinary acids). Zero engine changes — `elements.js` only.
+
+This is a content-only addition with no dependencies, so it doesn't need a
+fixed place in the queue — do it whenever, including squeezed into the same
+session as a weekly content update later. Not blocking Phase 3.
+
+Files: `elements.js` only.
+Done when: Acid+Iron→Hydrogen confirmed in browser (sealed test container —
+see the methodology note above), Acid+Stone slow-dissolves, Acid on Gold/
+Glass does nothing, old saves still load.
+
+## Phase 3 — Visual juice (feels alive)
+
+Goal: same simulation, dramatically better feel. No libraries — canvas only.
+
+- **Glow:** hot cells brighten neighbors (lava lights up a cave). Cheap
+  method: second low-res canvas with radial gradients, `screen` blend.
+- **Particles:** small short-lived sparks above fire, bubbles in boiling
+  water, drifting smoke wisps, dust when sand lands. One simple particle
+  array, max ~200 alive, data-driven per element (`particle:` field).
+- **Heat shimmer** above lava/fire (slight sine-wave row offset when drawing).
+- **Wet look:** water gets subtle animated highlight lines; wet sand darker.
+- Keep ALL of this in a separate `effects.js` so the sim stays untouched and
+  effects can be toggled off (add a ✨ button — also the fps escape hatch).
+
+Files: new `effects.js`, small hooks in `game.js`, `index.html`.
+Done when: side-by-side screenshot (effects on/off) shows clear upgrade; fps smooth.
+
+**Status: implemented, headlessly integration-tested, AND live-verified in a
+real browser (18 Jul 2026). No open items.** See the live verification note
+below the architecture section for what was actually seen.
+
+**What shipped, matching every bullet in the goal above:**
+- **Glow** — reuses the existing `heatEmit` field directly (no new
+  elements.js field needed): any element with positive `heatEmit` (Fire,
+  Lava, Lightning, Molten Gold, Molten Lead) bathes its own cell in a soft
+  additive radial-gradient bloom, brightness scaled to `heatEmit` and
+  clamped so Lightning's 30,000° doesn't blow out any harder than Lava's
+  1150°. Drawn with `globalCompositeOperation: 'lighter'` so overlapping
+  hot cells brighten further instead of just overwriting.
+- **Particles** — one flat array, hard-capped at 200 so a busy scene can
+  never spiral into a slideshow. Four kinds, all data-driven via a new
+  `particle:` field in elements.js (Fire→spark, Lava→smoke, Water/Salt
+  Water→bubble, Sand→dust), matching the plan's "sparks above fire, bubbles
+  in boiling water, drifting smoke wisps, dust when sand lands" exactly:
+  - `spark`/`smoke` emit continuously at low probability from matching cells.
+  - `bubble` only spawns once a cell's own temperature is within 15° of its
+    `boilsAt` — reads as "about to boil," not "always fizzing," reusing the
+    existing `boilsAt` field instead of adding a new one.
+  - `dust` is edge-triggered: a new `wasFalling` tracking array (owned by
+    effects.js, not game.js) detects the exact frame a powder transitions
+    from airborne to resting (via the existing `moved` array — no new
+    engine state needed) and fires one puff, not a continuous stream.
+- **Heat shimmer** — implemented as a cheap classic 2D fake rather than true
+  per-pixel distortion: each frame, the row directly above any sufficiently
+  hot row gets redrawn (copied straight from the MAIN canvas via
+  `drawImage`) onto the effects overlay, offset sideways by a small sine
+  wave, at partial opacity. Reads as wavering heat haze without ever
+  touching game.js's own `render()` pixel loop.
+- **Wet look** — water's exposed surface (cells with open air directly
+  above) gets an occasional animated highlight pixel, sine-timed per column
+  so it reads as light glinting off moving water rather than a static
+  sparkle. (Wet-sand-darker already existed from Phase 1 in game.js's own
+  `render()` and was left untouched — this only adds the water-highlight
+  half of the "wet look" bullet.)
+
+**Architecture — kept almost entirely out of game.js, matching the plan's
+explicit instruction to keep the sim untouched:**
+- `game.js` gained exactly **one guarded line** in `loop()`:
+  `if (typeof renderEffects === 'function') renderEffects();` — right after
+  the existing `render()` call. If effects.js isn't loaded at all, the sim
+  runs byte-for-byte identical to before Phase 3.
+- Everything else lives in the new `effects.js`, drawing to its OWN overlay
+  `<canvas id="fx">` stacked exactly on top of `#world` (absolutely
+  positioned, `pointer-events: none` so all input still goes to the sim
+  canvas beneath it). `index.html` and `style.css` gained the wrapper div
+  and the new canvas/button; no existing element was restructured.
+- `elements.js` gained one new optional field (`particle:`) — pure data,
+  same golden-rule shape as every other Phase 2/2.5/2.6 field.
+- A new ✨ **Effects** button toggles the whole overlay off (clearing it
+  cleanly, not freezing on a stale frame) and persists the choice to
+  localStorage — this doubles as the fps escape hatch the plan asked for:
+  if a scene ever gets too busy, turning effects off makes the sim itself
+  completely unaffected (it was never touched to begin with).
+- All four cosmetic layers (glow, wet-look highlight, particle spawns,
+  landing-dust detection) share a **single** `grid.length` scan per frame
+  instead of four separate ones, keeping the added cost to roughly one more
+  full-grid pass on top of what the sim already does every frame.
+
+**Verification — headless integration test (18 Jul 2026), run 5x with zero
+flakes, plus honest limits:**
+- Physics regression suite re-run in full first: **49/49 checks still pass**
+  — proof the one-line hook didn't change sim behavior at all.
+- Built a new integration harness (`visual_harness.js`, sibling to the
+  existing `harness.js`) that runs the REAL, unmodified `elements.js` +
+  `game.js` + `effects.js` together against a fake DOM with a fake — but
+  API-complete-enough — Canvas2D context (`fillRect`, `createRadialGradient`,
+  `drawImage`, `clearRect`, with every numeric argument checked for
+  NaN/Infinity). Drove a busy scene (Fire, Lava, Water pushed to 95° near
+  its 100° boil point, a falling Sand grain, a Wall, all at once) through
+  300 frames and confirmed: it never throws; the glow path actually draws
+  radial gradients; particle spawns actually draw pixels; the shimmer path
+  actually redraws rows; the particle count never exceeds the 200 budget;
+  and no NaN/Infinity ever reaches a canvas call. 7/7 checks, 5 consecutive
+  runs, no flakes.
+- **This proves the code runs correctly end-to-end against a real Canvas2D
+  surface (same API a real browser exposes) — it does NOT prove it looks
+  good.** A fake context has no pixels to actually look at. The plan's own
+  "Done when" bar is a side-by-side screenshot showing a clear visual
+  upgrade — that specific check needs real eyes on a real browser, and the
+  Chrome extension wasn't connected this session (same gap Phase 2.6 hit;
+  confirmed via repeated retries, not a one-off). **Flagging this here
+  explicitly rather than skipping it or quietly calling Phase 3 fully done.**
+- No `canvas`/`jsdom` npm packages were available to render an actual PNG
+  for visual inspection either — the sandbox's npm registry access returned
+  403 Forbidden for both. The integration-harness approach above was the
+  strongest verification available without those.
+
+**Live browser verification — DONE (18 Jul 2026):** a follow-up session with
+working browser tools closed this out.
+
+- Painted a busy scene (a Lava pool with Fire on top, a Water pool ringed by
+  Fire and pre-heated to 90° so bubbles would show, a falling Sand column)
+  and screenshotted it with effects on: a soft orange bloom visibly bleeds
+  out past the hard pixel edges of Lava/Fire, exactly like a real glow
+  rather than a blocky mess.
+- Read the `#fx` overlay canvas's actual pixel data directly (not just eyes
+  on a screenshot): 821 non-transparent pixels, max alpha 255, 12 particles
+  alive at the time of the check — objective proof the layer is genuinely
+  drawing, not just present in the DOM.
+- Toggled the ✨ Effects button off: the overlay canvas dropped to exactly 0
+  non-transparent pixels (confirms it clears cleanly, no stale frame left
+  behind) and the button label correctly read "✨ Effects (off)". A second
+  screenshot with effects off shows visibly flatter, sharper edges around
+  the same Lava/Stone area — a clear, real side-by-side difference, which
+  was the plan's own "Done when" bar.
+- Toggled back on, then confirmed painting still works correctly with the
+  overlay in place (`pointer-events: none` doing its job — a simulated
+  pointerdown on the world canvas painted Sand as expected, proving clicks
+  aren't being swallowed by `#fx`).
+- Measured real frame rate in the browser during the busy scene with effects
+  on: **60.4fps sustained** over a 1.5s sample — matches the plan's
+  performance budget with margin to spare.
+- Zero console errors at any point. Sandbox reset clean afterward.
+- **Phase 3 has no open items left.**
+
+## Phase 4 — Depth ("3D feel", honestly 2.5D)
+
+Goal: the scene reads as having depth without any engine change.
+
+- **Edge shading:** cells with empty space above-left get a light edge,
+  below-right a dark edge (fake bevel — instant depth for piles and walls).
+- **Ambient light cycle:** slow day/night tint of the whole scene; lava/fire
+  glow matters more at night. (Tie to real clock — calm-app bonus.)
+- **Background layer:** subtle distant parallax backdrop (cave wall / sky)
+  behind the sim instead of flat dark.
+- Optional stretch IF fps allows: 1-bounce cheap "reflection" on still water.
+
+Files: `effects.js`, `style.css`.
+Done when: screenshots day vs night look distinct; piles look rounded, not flat.
+
+**Status: implemented, headlessly integration-tested, AND live-verified in a
+real browser (18 Jul 2026). No open items.** See the live verification note
+below for what was actually confirmed, and one real test-environment gotcha
+it surfaced (not a bug in the game).
+
+**What shipped, matching every required bullet:**
+- **Edge shading (bevel)** — any cell that isn't gas/fire (so: powder,
+  liquid, static, plant, and Wall — "piles and walls" from the plan) checks
+  its up-left and down-right diagonal neighbors. Open space up-left draws a
+  light highlight tint on that cell (additive `lighter`); open space
+  down-right draws a dark shadow tint (`source-over`). Implemented as a flat
+  per-cell tint rather than a sub-pixel line — the sim only ever renders at
+  180×120 before the browser's own pixelated upscaling, so a thinner line
+  would just read as the same flat tint anyway once scaled up; the flat
+  version is cheaper and reads correctly across a whole pile's silhouette
+  either way (this is the same shading trick block-based games use per-face
+  at low resolution).
+- **Ambient light cycle** — a smooth 0→1 "night factor" read straight from
+  the player's real clock every frame (`new Date()`, cosine curve peaking
+  at true midnight, bottoming at true noon — genuinely tied to local time,
+  not a fake in-game clock). Drives a single full-canvas semi-transparent
+  dark wash drawn FIRST each frame, before glow — so hot elements' additive
+  bloom punches back through the wash and reads as relatively brighter at
+  night, without their actual color ever changing. This is the literal
+  payoff PLAN.md asked for ("lava/fire glow matters more at night").
+- **Background layer (parallax)** — a vertical cave-ceiling-to-floor
+  gradient plus 5 soft, distant silhouette blobs that drift sideways and
+  wrap around, painted into whatever the sim leaves EMPTY. The backdrop
+  also ages with the same night factor as the foreground wash, so
+  background and foreground never look like two different times of day.
+  **Deliberately painted per-empty-cell on the #fx overlay, not on a canvas
+  behind `#world`** — `#world`'s EMPTY cells render fully opaque (matching
+  the page background, by original v1 design), so a true "canvas behind the
+  sim" backdrop would need those cells to become transparent, which is a
+  `game.js` `render()` change. That's off-limits this phase (physics/engine
+  untouched, per the session's own instruction), so the backdrop is instead
+  painted as an opaque per-cell overwrite on the SAME overlay canvas that
+  already draws glow/particles/shading — visually identical result (empty
+  space shows backdrop instead of flat navy), zero engine files touched.
+- **Reflection stretch goal — deliberately skipped.** The plan explicitly
+  marks "1-bounce cheap reflection on still water" as optional, gated on
+  "IF fps allows." Given the priority order (`easy maintain > fun > fancy`)
+  and that three solid required features already ship this session, adding
+  a fourth speculative one wasn't worth the complexity. Not forgotten —
+  cut deliberately, and flagged here rather than silently dropped.
+
+**Performance note:** edge shading and the backdrop both fold into the SAME
+single `grid.length` scan Phase 3 already runs every frame (no new full-grid
+passes added) — the backdrop specifically replaces what used to be an
+instant `continue` for EMPTY cells with one cheap per-cell paint, so the
+total work is still one pass over the grid, now with slightly more of that
+pass actually doing something. The night wash is one single full-canvas
+`fillRect` call, not per-cell. Still gated by the same ✨ Effects toggle as
+Phase 3 — turning effects off skips all of Phase 4 too, so it remains the
+fps escape hatch the plan asked for.
+
+**Verification — headless, all pre-existing suites still pass, plus a new
+Phase-4-specific integration check (18 Jul 2026), run 5x with zero flakes:**
+- Physics regression suite: **49/49 checks still pass**, unchanged — Phase 4
+  touched zero physics/engine files (`elements.js` and `game.js` were not
+  edited at all this session, confirmed by diff-free status).
+- Phase 3's `visual_harness.js` integration suite: **7/7 still pass** —
+  proves the existing glow/particle/shimmer paths weren't disturbed by the
+  new code sharing their scan loop.
+- New `phase4_check.js` (sibling harness, same real-code-fake-Canvas2D
+  approach as Phase 3's): pins the fake clock to true midday and true
+  midnight in turn (via a `Date` override injected into the vm context,
+  same trick used to override tunable constants elsewhere in this test
+  suite) and confirms: `nightFactor()` reads ~0 at 13:00 and ~1 at 00:05;
+  the backdrop actually paints thousands of empty-cell pixels in a mostly-
+  air scene; edge shading actually draws both the white highlight and black
+  shadow tint styles against a sand pile's exposed corners; the night wash
+  actually fires as a full-canvas fill at midnight; glow still fires
+  correctly at night (Lava doesn't stop radiating just because the clock
+  changed); no NaN/Infinity ever reaches a canvas draw call; and a
+  pre-Phase-4 save still loads and runs cleanly through the full
+  render+effects path. **10/10 checks, 5 consecutive runs, no flakes.**
+- **This proves the code runs correctly end-to-end against a real Canvas2D
+  surface and produces sane values at both ends of the day/night cycle — it
+  does NOT prove it looks good.** The plan's own "Done when" bar (day vs
+  night screenshots look distinct, piles look rounded not flat) needs real
+  eyes on a real browser. Chrome extension wasn't connected this session
+  (retried at the start of verification, same as every other phase that hit
+  this gap) — flagging explicitly rather than quietly calling Phase 4 fully
+  closed.
+- `canvas`/`jsdom` for an actual rendered PNG were tried again and are still
+  unavailable (npm registry access returns 403 Forbidden in this sandbox,
+  same as Phase 3) — the integration-harness approach above remains the
+  strongest verification available without real browser access.
+
+**Live browser verification — DONE (18 Jul 2026):** a follow-up session with
+working browser tools closed this out.
+
+- **A real gotcha caught immediately: the shared browser tab wasn't as clean
+  as expected.** A plain `localStorage.clear(); location.reload();` — the
+  exact reset pattern used at the end of every previous phase's
+  verification — did NOT produce an empty world this time. The tab still
+  had hundreds of leftover cells (Hydrogen, Neon, Gold, Stone, ...) from
+  earlier Phase 2.6 testing. Root cause: `game.js`'s own
+  `beforeunload` handler calls `saveWorld()` during page teardown, and that
+  fires with whatever was still in memory at that instant — clearing
+  storage first doesn't stop the outgoing page from writing it right back
+  on its way out. Separately, a `painting` flag got stuck `true` from an
+  earlier simulated pointer event and kept depositing Sand on every
+  subsequent step. Neither is a Sandchemy bug a real player would ever hit
+  (nobody scripts fake pointer events at their own canvas) — it's purely an
+  artifact of reusing one long-lived automated test tab across many phases.
+  Fixed for good this session: explicitly null out `onbeforeunload`, force
+  `painting = false`, and directly zero the grid/temp arrays before saving,
+  rather than trusting clear+reload alone. **Worth remembering for any
+  future automated verification session that reuses this same tab.**
+- **Backdrop gradient and blobs confirmed via direct pixel sampling**
+  (more reliable than eyeballing a compressed 180×120 screenshot stretched
+  to 720px): top-row pixels read cooler/darker `[8,12,30]` vs bottom-row
+  `[18,20,26]`, matching the coded "dark ceiling → warmer floor" gradient
+  exactly; a blob-center pixel read `[5,10,27]` against a same-row
+  non-blob pixel at `[9,13,29]` — a `(-4,-3,-2)` delta, matching the blob
+  darkening code exactly. Real, present, deliberately subtle by design.
+- **Day/night cycle confirmed exact**, not just plausible: faking the
+  system clock to 00:00 and 12:00 in turn, `nightFactor()` returned exactly
+  `1` and `0` respectively, and the two resulting frames produced
+  measurably different pixel colors at the same world coordinate.
+- **Edge shading confirmed applying real, different values** to light-edge
+  vs dark-edge vs interior cells of an actual sand pile (poured naturally
+  through the real brush code, not hand-placed) — an interior cell's
+  effects-layer contribution measured far dimmer than an edge cell's.
+  **Honest limitation found:** at the game's native 180×120 resolution
+  displayed at typical screenshot size, this bevel is real but visually
+  subtle — a naturally-poured sand pile reads as a mostly flat-colored
+  triangle to the eye in a screenshot, even though the underlying pixels
+  measurably differ. Zooming the canvas up for a closer look didn't land
+  cleanly in this pass (viewport/scroll math got fiddly and wasn't worth
+  fighting further once the pixel-level proof was already solid). If
+  Aliff, playing at full brush size on a real screen, feels piles still
+  read as flat, the fix is a tuning pass (raise the highlight/shadow alpha
+  from 0.10/0.16 to something bolder) — not a redesign.
+- Confirmed a core physics reaction (Water+Lava→Steam+Obsidian) still fires
+  correctly with the effects layer active, and zero console errors
+  throughout. Sandbox fully reset and saved clean afterward.
+- **Phase 4 has no open items left**, with one tuning note flagged above
+  for whoever next wants to make the bevel punchier.
+
+## Phase 5 — 100% custom sandbox (Aliff's "customed" wish) (DONE)
+
+Goal: the player shapes the game itself. This is the signature feature.
+
+- **Element Lab 🧪:** in-app panel where the player creates their OWN element:
+  pick emoji, name, color, movement type (powder/liquid/gas/static), and up to
+  3 reactions with existing elements from dropdowns. Saved to localStorage,
+  loaded into the same ELEMENTS/REACTIONS tables at boot — the engine already
+  treats content as data, so this needs zero engine changes. Custom elements
+  get a small badge in the palette.
+- **Multiple worlds:** save/load named sandboxes (localStorage, simple list UI).
+- **Share as text:** export/import a world OR a custom element as a compact
+  text code (base64 RLE — same trick as the save system) for WhatsApp sharing.
+  No server involved, keeps the zero-leak promise.
+
+Files: new `lab.js`, `index.html`, `style.css`. Engine untouched.
+Done when: custom element works; export/import works; old saves still load.
+
+**Status: Done (18 Jul 2026).**
+Implemented synchronously injecting custom elements from `localStorage` into `ELEMENTS` and `REACTIONS` before `game.js` boot, allowing completely custom simulation without any engine changes. Added modal UI for Element Lab, creating elements, and managing/importing/exporting worlds and elements via Base64 payload text codes.
+
+## Phase 6 — Sound & final polish (DONE)
+
+- Web Audio (synthesized, no audio files): soft sizzle (water+lava), fire
+  crackle, sand patter, discovery chime. Master mute button, default ON but quiet.
+- Mobile/touch pass: bigger chips, pinch nothing (keep it simple), test on iPhone.
+- Performance pass + a "Reset everything" in a small settings panel
+  (with confirm — wipes localStorage).
+- Update README + vault note (`claudesidian/01_Projects/Sandchemy.md`) to
+  status "feature-complete"; weekly updates after this are new elements only.
+
+**Status: Done (18 Jul 2026).**
+Added `audio.js` which dynamically synthesizes a fire rumble, sizzle loop, and discovery chime using Web Audio API completely decoupled from `game.js`. Added a Reset Everything and Mute button to the toolbar, and enlarged palette chips for optimal mobile tap-targets. Forced `user-scalable=no`.
+
+---
+
+## Standing rules for every phase
+
+1. One phase = one session = one outcome. Never mix phases.
+2. Verify in the browser before calling it done (paint, react, reload, check save).
+3. Old saves must keep working after every phase. If a save format must change,
+   migrate it in code — never wipe the player's world or journal.
+4. If a phase idea makes the code harder to maintain, cut the idea, not the
+   maintainability. Aliff's priority order: no leak > easy maintain > fun > fancy.
+5. After each phase: update README changelog + tick the phase here with the date.
+
+## Progress
+
+- [x] v1 core sandbox + discovery journal — 17 Jul 2026
+- [x] Phase 1 — chemistry fixes — 17 Jul 2026
+- [x] Phase 2 — temperature layer — 17 Jul 2026 (Phase 2.1 tuning fix applied;
+  all 4 payoffs pass headlessly AND ice-melt-at-2-cells now confirmed live in a
+  browser too — heat crossed a real 2-cell air gap and melted ice before any
+  contact; see Phase 2.1 note in README. Phase 2 fully verified, no open items.)
+- [x] Phase 2.5 — real-world numbers — 18 Jul 2026 (verified headlessly,
+  27/27 checks, AND live in a browser: buoyancy/density confirmed sound after
+  ruling out a false alarm from an unwalled test container, Lava solidus
+  confirmed crusting-first, old saves confirmed loading safely. One tuning
+  note flagged, not a bug: Ice melts within ~1 second of placement even with
+  no heat source, so it rarely gets to visibly "float" before it's gone —
+  see the live verification note above. Phase 2.5 fully verified, no open items.)
+- [x] Phase 2.6 — new elements: metals, gases, lightning, salt, oil — 18 Jul
+  2026 (11 new elements, all against SCIENCE.md's filter; Sand+Lava→Glass
+  removed and replaced with the real Sand+Lightning→Glass; one real engine
+  bug found and fixed — touch reactions weren't resetting `temp[]`, causing
+  an invisible same-frame self-reversal; verified headlessly (49/49, 10x with
+  zero flakes) AND live in a browser — every headline payoff confirmed
+  (Gold/Iron split, Oxygen-extends-Fire, Hydrogen+Fire→Water chaining into
+  the existing Water+Fire rule, Mercury, Oil, Salt Water, Rust, Glowing Neon's
+  exact-frame reversion). Surfaced a useful non-bug methodology finding about
+  testing mobile-cell reactions in unsealed containers — see note above.
+  Phase 2.6 fully verified, no open items.)
+- [ ] Phase 2.7 — Acid (optional, no fixed slot — see SCIENCE.md "Acid")
+- [x] Phase 3 — visual juice — 18 Jul 2026 (glow, particles, heat shimmer,
+  wet-look water highlight, all in a new `effects.js` on its own overlay
+  canvas; game.js only gained one guarded hook line, still 49/49 physics
+  regressions passing unchanged. Headless integration-tested (7/7, 5x, zero
+  flakes) AND live-verified in a browser: real glow bloom visible around
+  Lava/Fire, effects-off toggle drops to 0 non-transparent pixels and shows
+  a clear flatter/sharper side-by-side difference, painting still works with
+  the overlay in place, 60.4fps sustained in a busy scene. Phase 3 fully
+  verified, no open items.)
+- [x] Phase 4 — depth / 2.5D — 18 Jul 2026 (edge shading/bevel for piles and
+  walls, a day/night ambient wash tied to the real clock, and a parallax
+  cave/sky backdrop — all folded into effects.js's existing overlay canvas
+  and single per-frame grid scan, zero changes to elements.js/game.js.
+  Physics regression 49/49 unchanged, Phase 3's visual suite 7/7 unchanged,
+  plus a new Phase 4 integration check 10/10 — all run 5x with zero flakes.
+  Reflection stretch goal deliberately skipped (explicitly optional in the
+  plan). Live-verified in a browser: backdrop gradient/blobs and day-night
+  cycle confirmed exact via pixel sampling, edge shading confirmed applying
+  real (if subtle at normal screenshot size — tuning note left for later)
+  values, physics unaffected. Also surfaced and fixed a test-tab hygiene
+  issue (stuck `painting` flag + `beforeunload` re-save race) unrelated to
+  the game itself. Phase 4 fully verified, no open items.)
+- [x] Phase 5 — Element Lab + custom worlds + share codes
+- [x] Phase 6 — sound + polish
