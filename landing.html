@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sandchemy — The Physics Sandbox That Teaches Real Chemistry</title>
+<meta name="description" content="Sandchemy is a free, offline-first falling-sand physics lab where every reaction is real chemistry. No install, no account, no server — built for curious minds and classrooms alike.">
+<style>
+  :root{
+    --bg:#0d0f1a; --panel:#14172a; --panel2:#181c33; --border:#2c3252;
+    --gold:#ffd76b; --text:#eee; --muted:#9aa2bd; --accent:#7ee3ff;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.65;
+  }
+  a{color:var(--gold);}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+  header.nav{
+    position:sticky; top:0; z-index:20; background:rgba(13,15,26,0.9);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--border);
+  }
+  .nav-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 24px; max-width:1080px; margin:0 auto;}
+  .brand{display:flex; align-items:center; gap:8px; font-weight:800; font-size:1.2rem; color:#fff;}
+  .brand .flask{font-size:1.4rem;}
+  nav.links{display:flex; gap:22px; font-size:0.95rem;}
+  nav.links a{color:var(--muted); text-decoration:none;}
+  nav.links a:hover{color:var(--gold);}
+  .cta-btn{
+    display:inline-block; background:var(--gold); color:#1a1300; font-weight:700;
+    padding:10px 20px; border-radius:10px; text-decoration:none; border:none; cursor:pointer;
+    font-size:0.95rem;
+  }
+  .cta-btn.ghost{
+    background:transparent; color:var(--gold); border:1px solid var(--gold);
+  }
+  .hero{
+    text-align:center; padding:90px 24px 70px; background:
+      radial-gradient(ellipse at 50% -10%, rgba(255,215,107,0.12), transparent 60%);
+  }
+  .hero h1{
+    font-size:3.2rem; margin:0 0 14px; color:#fff; letter-spacing:-0.02em;
+  }
+  .hero h1 .accent{color:var(--gold);}
+  .hero p.sub{
+    font-size:1.25rem; color:var(--muted); max-width:640px; margin:0 auto 34px;
+  }
+  .hero .ctas{display:flex; gap:16px; justify-content:center; flex-wrap:wrap;}
+  .badge-row{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:36px;
+  }
+  .badge{
+    font-size:0.8rem; color:var(--muted); border:1px solid var(--border);
+    padding:6px 12px; border-radius:999px; background:var(--panel);
+  }
+  section{padding:70px 24px;}
+  section.alt{background:var(--panel);}
+  h2.section-title{
+    font-size:2rem; text-align:center; color:#fff; margin:0 0 10px;
+  }
+  p.section-lead{
+    text-align:center; color:var(--muted); max-width:620px; margin:0 auto 46px; font-size:1.05rem;
+  }
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:20px; max-width:1080px; margin:0 auto;
+  }
+  .card{
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px;
+    padding:24px;
+  }
+  .card .icon{font-size:1.8rem; margin-bottom:10px; display:block;}
+  .card h3{margin:0 0 8px; color:#fff; font-size:1.1rem;}
+  .card p{margin:0; color:var(--muted); font-size:0.95rem;}
+  .split{
+    display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;
+    max-width:1080px; margin:0 auto;
+  }
+  @media (max-width:800px){ .split{grid-template-columns:1fr;} .hero h1{font-size:2.2rem;} }
+  .mock{
+    background:var(--panel2); border:1px solid var(--border); border-radius:16px;
+    padding:18px; box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  }
+  .mock-row{display:flex; gap:14px;}
+  .mock-tabs{display:flex; flex-direction:column; gap:6px; width:120px;}
+  .mock-tab{
+    background:var(--panel); border:1px solid var(--border); border-radius:8px;
+    padding:6px 8px; font-size:0.75rem; color:var(--muted);
+  }
+  .mock-tab.active{border-color:var(--gold); color:var(--gold);}
+  .mock-canvas{
+    flex:1; height:200px; border-radius:8px; border:1px solid var(--border);
+    background:
+      linear-gradient(180deg, #0d0f1a 0%, #0d0f1a 60%, #3a2a12 60%, #3a2a12 100%),
+      radial-gradient(circle at 30% 80%, #ff8a3d 0%, transparent 25%),
+      radial-gradient(circle at 70% 40%, #7ee3ff33 0%, transparent 20%);
+    position:relative; overflow:hidden;
+  }
+  .mock-caption{font-size:0.8rem; color:var(--muted); text-align:center; margin-top:12px;}
+  ul.check{list-style:none; padding:0; margin:0;}
+  ul.check li{
+    padding:8px 0 8px 28px; position:relative; color:var(--text); font-size:1rem;
+  }
+  ul.check li::before{
+    content:"✓"; position:absolute; left:0; top:8px; color:var(--gold); font-weight:800;
+  }
+  .quote-block{
+    max-width:700px; margin:0 auto; text-align:center; font-size:1.15rem; color:#fff;
+    font-style:italic; padding:0 20px;
+  }
+  .quote-block cite{
+    display:block; margin-top:16px; font-style:normal; color:var(--muted); font-size:0.9rem;
+  }
+  .cta-final{
+    text-align:center; background:linear-gradient(180deg, var(--panel), var(--bg));
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  }
+  .cta-final h2{color:#fff; font-size:2rem; margin-bottom:10px;}
+  .cta-final p{color:var(--muted); margin-bottom:30px;}
+  footer{
+    padding:40px 24px; text-align:center; color:var(--muted); font-size:0.85rem;
+    border-top:1px solid var(--border);
+  }
+  footer a{color:var(--muted); text-decoration:underline;}
+  footer .foot-links{display:flex; gap:18px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
+  .stat-row{display:flex; gap:40px; justify-content:center; flex-wrap:wrap; margin:40px 0 0;}
+  .stat{text-align:center;}
+  .stat .num{font-size:2.1rem; font-weight:800; color:var(--gold);}
+  .stat .label{font-size:0.85rem; color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand"><span class="flask">⚗️</span> Sandchemy</div>
+    <nav class="links">
+      <a href="#features">Features</a>
+      <a href="#educators">For Educators</a>
+      <a href="#model">How It Works</a>
+      <a href="about.html">About</a>
+    </nav>
+    <a class="cta-btn" href="index.html">Launch the Sandbox →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Physics you can <span class="accent">pour</span>.<br>Chemistry you can <span class="accent">discover</span>.</h1>
+    <p class="sub">Sandchemy is a falling-sand physics lab where every reaction is real
+      science — sourced melting points, real densities, real thermodynamics — running
+      entirely in your browser. No install. No account. No data ever leaves your device.</p>
+    <div class="ctas">
+      <a class="cta-btn" href="index.html">🧪 Launch the Sandbox — Free</a>
+      <a class="cta-btn ghost" href="#educators">For Schools &amp; Educators</a>
+    </div>
+    <div class="badge-row">
+      <span class="badge">⚡ 56 real elements</span>
+      <span class="badge">🔬 Sourced physics &amp; chemistry</span>
+      <span class="badge">📵 Zero data collection</span>
+      <span class="badge">📲 Installable, works offline</span>
+      <span class="badge">💸 Free forever, core sandbox</span>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2 class="section-title">Not a toy pretending to be science. Actual science.</h2>
+    <p class="section-lead">Every element, every reaction, every temperature in Sandchemy
+      is grounded in a real number — documented and sourced, not invented for effect.</p>
+    <div class="grid">
+      <div class="card">
+        <span class="icon">🌡️</span>
+        <h3>Real thermodynamics</h3>
+        <p>Heat radiates, diffuses, and decays cell by cell. Lava melts ice from a
+          distance. A wall genuinely blocks heat. Nothing is scripted — it emerges.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🧫</span>
+        <h3>Defensible chemistry</h3>
+        <p>Every recipe (Iron rusting, Acid dissolving metal, Hydrogen becoming Water)
+          is justified in one real sentence of chemistry — no "magic" combinations.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🔎</span>
+        <h3>Sensor Probe</h3>
+        <p>Hover any cell to read its live temperature and state in real time — the
+          same instinct as a real lab thermometer, built into the canvas itself.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🧪</span>
+        <h3>Element Lab</h3>
+        <p>Design your own element — emoji, color, physics behavior, up to 3 custom
+          reactions — with zero code. Export it as a text code and share it instantly.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🌋</span>
+        <h3>Prebuilt Scenarios</h3>
+        <p>Load ready-made setups like Volcano Eruption to jump straight into a
+          guided experiment instead of an empty grid.</p>
+      </div>
+      <div class="card">
+        <span class="icon">📓</span>
+        <h3>Discovery Journal</h3>
+        <p>Every new combination you find is logged automatically, forever — the
+          exact opposite of tools that wipe your progress the moment you refresh.</p>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num">56</div><div class="label">real elements</div></div>
+      <div class="stat"><div class="num">8</div><div class="label">categories</div></div>
+      <div class="stat"><div class="num">0</div><div class="label">servers or accounts</div></div>
+      <div class="stat"><div class="num">100%</div><div class="label">runs offline once installed</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="model">
+  <div class="wrap split">
+    <div>
+      <h2 class="section-title" style="text-align:left">Physics IS the crafting system</h2>
+      <p style="color:var(--muted); font-size:1.05rem;">Most "elemental" games fake their
+        combos — pour water on lava, get a scripted splash. Sandchemy simulates it: real
+        heat, real density, real state changes. Pour water on lava and you don't just see
+        an effect, you <em>discover Obsidian</em> — because that's what actually happens
+        when lava quenches fast.</p>
+      <ul class="check">
+        <li>Category-tabbed palette across Basics, Metals, Gases, Chemistry, Electric, Weather, Life, and Crafting</li>
+        <li>Nuclear physics done safely: Uranium decays into Radiation, Lead genuinely shields against it</li>
+        <li>Simple food-chain creatures (Fish, Bugs) that live, react to their environment, and die</li>
+        <li>Installable as a real app (PWA) — icon on your home screen, works with no internet</li>
+      </ul>
+    </div>
+    <div class="mock">
+      <div class="mock-row">
+        <div class="mock-tabs">
+          <div class="mock-tab">🧪 Basics</div>
+          <div class="mock-tab active">🧫 Chemistry</div>
+          <div class="mock-tab">⚙️ Metals</div>
+          <div class="mock-tab">💨 Gases</div>
+          <div class="mock-tab">⚡ Electric</div>
+        </div>
+        <div class="mock-canvas"></div>
+      </div>
+      <div class="mock-caption">The actual in-browser sandbox — category tabs, live canvas, Discovery Journal alongside</div>
+    </div>
+  </div>
+</section>
+
+<section id="educators">
+  <div class="wrap">
+    <h2 class="section-title">Built for classrooms, not just curiosity</h2>
+    <p class="section-lead">A lab with no broken glassware, no chemical budget, and no
+      safety incident report — just real cause-and-effect, on any device with a browser.</p>
+    <div class="grid">
+      <div class="card">
+        <span class="icon">🏫</span>
+        <h3>Zero setup for teachers</h3>
+        <p>No install, no login, no IT ticket. Open a link on a classroom projector or
+          hand it to students on shared lab computers — it just runs.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🧑‍🔬</span>
+        <h3>Safe, unlimited experimentation</h3>
+        <p>Students can "waste" unlimited acid, lava, or electricity with zero cost and
+          zero danger — the exact freedom real lab budgets can't give them.</p>
+      </div>
+      <div class="card">
+        <span class="icon">📊</span>
+        <h3>Built-in assessment hooks</h3>
+        <p>The Discovery Journal is a ready-made lab notebook — ask students to
+          screenshot their journal as proof of the reactions they found.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🔒</span>
+        <h3>Privacy-first by design</h3>
+        <p>No accounts, no tracking, no student data collected — everything saves
+          locally in the student's own browser. Nothing to clear with the school's DPO.</p>
+      </div>
+    </div>
+    <p style="text-align:center; margin-top:40px; color:var(--muted);">
+      Teaching chemistry, physics, or computational thinking and want a classroom pilot,
+      a curriculum-aligned worksheet pack, or an LMS-friendly version?
+      <a href="mailto:cookingwithcattitude@gmail.com">Get in touch</a> — we'd love to
+      work with educators directly.
+    </p>
+  </div>
+</section>
+
+<section class="alt cta-final">
+  <div class="wrap">
+    <h2>Turn curiosity into discovery.</h2>
+    <p>Free to use. No install required. Works on the oldest laptop in the school lab.</p>
+    <a class="cta-btn" href="index.html">🧪 Launch Sandchemy Now</a>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-links">
+    <a href="about.html">About</a>
+    <a href="privacy-policy.html">Privacy Policy</a>
+    <a href="mailto:cookingwithcattitude@gmail.com">Contact</a>
+  </div>
+  <p>Sandchemy — a falling-sand physics lab. Built with no server, no account, and no
+    data collection, by design.</p>
+</footer>
+
+</body>
+</html>

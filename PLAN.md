@@ -9,16 +9,26 @@
 > After editing, rsync this folder to the session scratchpad and serve from
 > there (see the `sandchemy` entry pattern in `Documents/.claude/launch.json`).
 
-> **Phase 7 (7a/7b/7c/7d) AND Phase 8 (panelized layout) are both fully
-> shipped (19 Jul 2026), live-verified.** All of Phase 7's sub-phases plus
-> Phase 8 were built in one continuous session at Cat's explicit request to
-> push through despite the "one phase per session" rule below — every
-> sub-phase/phase was still verified live in the browser before moving to
-> the next, and flagged open decisions (7c's, then Phase 8's) were still
-> asked rather than guessed. **Next up: pick a new Phase from here, or
-> start a fresh weekly content update (new elements via `elements.js` only,
-> per README's own maintenance model).** The old sub-phase kickoff prompt
-> below is kept for reference/history:
+> **Phase 7 (7a/7b/7c/7d), Phase 8 (panelized layout), and Phase 2.7 (Acid)
+> are all fully shipped (19 Jul 2026), live-verified.** All of Phase 7's
+> sub-phases plus Phase 8 were built in one continuous session at Cat's
+> explicit request to push through despite the "one phase per session" rule
+> below — every sub-phase/phase was still verified live in the browser
+> before moving to the next, and flagged open decisions (7c's, then Phase
+> 8's) were still asked rather than guessed.
+>
+> **A parallel, non-phase workstream also shipped this same day: go-to-market
+> materials** (marketing website, Cradle Fund CIP Spark pitch deck + grant
+> brief, an educator-facing guide) — see the "Outreach & Grant Materials"
+> section near the end of this file. This is deliberately kept separate from
+> the numbered Phase list above: it's business/outreach collateral, not a
+> sandbox feature, and touches zero engine/content files.
+>
+> **Next up: pick a new Phase from here, start a fresh weekly content
+> update (new elements via `elements.js` only, per README's own maintenance
+> model), or continue the outreach workstream** (e.g. finalizing the
+> co-founder/company-registration fields flagged "to confirm" in the grant
+> brief). The old sub-phase kickoff prompt below is kept for reference/history:
 >
 > ```
 > Read PLAN.md and README.md in this repo (Sandchemy — a falling-sand
@@ -1965,3 +1975,116 @@ regression — updated the cheatsheet's own copy (`index.html`) to say
   with zero console errors. One intentional, documented behavior change:
   7b's 1-9/0 shortcuts are now tab-relative instead of palette-global.
   No open items.)
+- [x] Outreach & Grant Materials (website, pitch deck, grant brief,
+  educator guide) — 19 Jul 2026 (see the dedicated section below. Not a
+  numbered Phase — business/outreach collateral, zero engine/content files
+  touched. Team composition and company registration are honestly flagged
+  "to confirm" rather than invented.)
+
+## Outreach & Grant Materials (started 19 Jul 2026)
+
+This is a parallel workstream, not a numbered Phase — it produces
+business/outreach collateral rather than sandbox features, and touches
+zero files in the content/engine split (`elements.js`/`game.js`/
+`effects.js` all untouched). Kept here for the same reason every other
+piece of this project gets documented: so a future session (or Aliff)
+knows exactly what shipped, what's still a placeholder, and why.
+
+**Trigger:** Cat asked to "wrap it up" with a startup website, a pitch deck
+"and everything," framed the whole project as a Cradle Fund grant
+application, and asked for education-audience materials (schools, teachers,
+professors, students) — all in one request.
+
+**Open decisions asked before building, per this project's own standing
+rule (never guess a flagged decision):**
+1. Team composition for the grant application — answered "not sure yet,
+   just prep the materials" → team fields in both the deck and the grant
+   brief are explicitly marked "to confirm," not invented.
+2. Business model — answered "open-ended, brainstorm it in the deck" →
+   the deck presents 3 credible paths (EdTech licensing, freemium consumer,
+   hybrid B2B2C) rather than committing to one, with EdTech licensing
+   flagged as the recommended lead path since it best matches CIP Spark's
+   own commercialisation bar.
+3. Funding ask — answered "max it out" → RM150,000, CIP Spark's actual
+   pre-seed cap, split 60% development / 40% commercialisation per CIP
+   Spark's own published rule (verified via live web search, not assumed).
+4. Scope — answered "all of it" → website + pitch deck + grant brief +
+   educator guide + this documentation update, all in one session.
+
+**What shipped:**
+
+- **`landing.html`** — a new, separate marketing/startup front page (hero,
+  problem/solution, feature grid, a dedicated "For Educators" section,
+  final CTA). Matches the app's own dark navy (`#0d0f1a`/`#14172a`) + gold
+  (`#ffd76b`) theme exactly rather than inventing a new palette. Links out
+  to the real `index.html` sandbox, `about.html`, and `privacy-policy.html`
+  — none of which were modified. The actual product entry point
+  (`index.html`) is completely untouched by this work.
+- **`pitch/Sandchemy_CIP_Spark_Pitch_Deck.pptx`** — an 11-slide deck (title,
+  problem, solution, product/feature demo, market, business model options,
+  traction + 12-month roadmap, team, the ask, why-CIP-Spark-fits, closing).
+  Built with pptxgenjs using the app's own color palette as the deck's
+  palette (not a generic template) — a real color-consistency touch, not
+  just for its own sake. Market slide cites a real, sourced figure (Malaysia
+  EdTech market ~USD 1.05B in 2024 → ~USD 2.88B by 2033, IMARC Group), found
+  via live web search rather than invented. All icons are rendered via
+  react-icons + sharp (not literal emoji characters) after live visual QA
+  caught that emoji glyphs render as invisible/empty tofu boxes in the
+  LibreOffice-based PDF preview pipeline (no color-emoji font available
+  headlessly) — rasterizing to real PNGs sidesteps that font-availability
+  problem entirely, regardless of what renders the final file. A first
+  render also came out with the icons in solid black instead of gold: the
+  react-icons SVGs use `fill="currentColor"` on their child `<path>`
+  elements, which only resolves through a browser's CSS cascade — a
+  standalone `sharp`/resvg rasterize has no such cascade to resolve through,
+  so `currentColor` silently defaulted to black. Fixed by setting
+  `fill`/`stroke` directly as presentation attributes on the icons' own
+  wrapper `<svg>` tag instead of relying on the `currentColor` keyword —
+  confirmed via a direct pixel-color read (`(255, 215, 107)`, exactly
+  `#FFD76B`) before rebuilding the deck. Validated with the pptx skill's own
+  schema/relationship/chart checker (all passed) and a `markitdown` sweep
+  for leftover placeholder text (none found), plus full visual QA of every
+  slide via LibreOffice-rendered images.
+- **`pitch/Sandchemy_CIP_Spark_Grant_Brief.docx`** — a formal ~5-page grant
+  brief: executive summary, company & team overview (with an explicit
+  "to confirm" note for company registration and the second team member,
+  rather than inventing either), problem/solution/product detail, the same
+  sourced market figure as the deck, business model, traction + roadmap, a
+  use-of-funds table (RM150,000, 60/40 split), and a CIP Spark eligibility
+  self-assessment table scored against Cradle's real, live-searched
+  published criteria (5-year company age cap, RM3M revenue cap, 2-person/
+  1-Malaysian minimum team, IP ownership, ≥51% Malaysian ownership). Two
+  rows are honestly marked "In progress" (team size) rather than "Meets,"
+  since the team requirement isn't actually satisfied yet. Visual QA caught
+  the use-of-funds table's first row splitting awkwardly across a page
+  boundary (LibreOffice was breaking a table row mid-cell); fixed by
+  setting `cantSplit: true` on every row in both tables plus a manual page
+  break before the funds table, confirmed clean on re-render.
+- **`EDUCATION.md`** — a new root-level doc for teachers/lecturers/schools/
+  colleges/students: why bring this into a classroom, subject-by-subject
+  alignment (chemistry, physics, earth science, light biology, nuclear/
+  radiation basics done safely, computational thinking), the teaching-
+  specific tools already in the app (Sensor Probe, Element Lab, Scenarios,
+  Discovery Journal, category tabs), several concrete sample lesson ideas
+  tied to real shipped mechanics (Acid+Iron→Hydrogen chaining into
+  Hydrogen+Fire→Water, the deliberate Acid+Gold/Glass non-reactions, Lead
+  shielding against Radiation), a getting-started checklist for teachers,
+  and a privacy/IT-notes section for administrators (no accounts, no
+  server, no analytics, nothing to have a data-protection conversation
+  about). Matches the documentation style of every other root-level `.md`
+  file in this repo.
+- **PLAN.md / README.md** — this section, plus a matching README.md
+  changelog entry, both dated 19 Jul 2026.
+
+**What's explicitly NOT done, on purpose:** no real company has been
+incorporated, no second team member has been recruited, and no numbers in
+the funding ask are anything other than the CIP Spark program's own
+published maximum — none of this should be treated as ready to literally
+submit to Cradle Fund without Aliff first closing the "to confirm" items
+called out in both the deck and the brief.
+
+**No open items for the deliverables themselves** — all four files
+render cleanly, pass their respective skills' validation/QA steps, and
+contain zero placeholder/lorem-ipsum text. The open items are business
+ones (team, incorporation), not build ones, and are flagged as such
+everywhere they appear.

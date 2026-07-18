@@ -23,6 +23,31 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Outreach & Grant Materials (19 Jul 2026)
+
+- New `landing.html` — a public marketing/startup front page (hero,
+  problem/solution, feature grid, a "For Educators" section, CTA), matching
+  the app's own dark navy/gold theme. `index.html` (the actual sandbox) is
+  untouched.
+- New `pitch/Sandchemy_CIP_Spark_Pitch_Deck.pptx` — an 11-slide pitch deck
+  for Cradle Fund's CIP Spark pre-seed program: problem, solution, product,
+  a sourced Malaysia EdTech market slide, 3 business-model options, traction
+  + roadmap, team, the RM150,000 ask, and CIP Spark fit.
+- New `pitch/Sandchemy_CIP_Spark_Grant_Brief.docx` — a formal grant brief
+  with a CIP Spark eligibility self-assessment table. Team composition and
+  company registration are explicitly marked "to confirm" rather than
+  invented — this is not ready to submit as-is.
+- New `EDUCATION.md` — a guide for teachers/lecturers/schools/colleges:
+  subject alignment, sample lesson ideas tied to real shipped mechanics,
+  teacher-specific in-app tools, and privacy/IT notes for administrators.
+- No engine or content files touched — `elements.js`/`game.js`/`effects.js`
+  all untouched, same boundary every cosmetic/outreach-only addition keeps.
+- Full detail, including the open decisions asked before building and a
+  couple of real bugs found and fixed during visual QA (emoji rendering as
+  invisible boxes in the pitch deck's PDF preview pipeline; a grant-brief
+  table splitting awkwardly across a page), is in PLAN.md's dedicated
+  "Outreach & Grant Materials" section.
+
 ## Phase 2.7 — Acid (19 Jul 2026)
 
 - New Acid element: a real alternative to the Erase button (which stays
@@ -397,12 +422,18 @@ See **PLAN.md** — the master phased plan to "perfect custom sandbox"
 (chemistry fixes → temperature → visual juice → 2.5D depth → Element Lab →
 sound → material textures). One phase per session, in order.
 
-**Phase 7 and Phase 8 are both fully shipped** — all four Phase 7
-sub-phases (7a PWA installability, 7b keyboard shortcuts, 7c UI redesign,
-7d onboarding) plus Phase 8's panelized layout are done and live-verified;
-see the changelog entries above and PLAN.md for full detail. Next up: pick
-a new phase, or fold in a weekly content-only update (new elements via
-`elements.js` only, per this file's own maintenance model above).
+**Phase 7, Phase 8, and Phase 2.7 (Acid) are all fully shipped** — all four
+Phase 7 sub-phases (7a PWA installability, 7b keyboard shortcuts, 7c UI
+redesign, 7d onboarding), Phase 8's panelized layout, and Phase 2.7's Acid
+element are done and live-verified; see the changelog entries above and
+PLAN.md for full detail. A separate outreach workstream (marketing website,
+Cradle Fund CIP Spark pitch deck + grant brief, educator guide) has also
+shipped — see the "Outreach & Grant Materials" changelog entry above and
+PLAN.md's dedicated section. Next up: pick a new phase, fold in a weekly
+content-only update (new elements via `elements.js` only, per this file's
+own maintenance model above), or continue the outreach workstream (e.g.
+closing the co-founder/company-registration items flagged "to confirm" in
+the grant brief).
 
 Extra ideas for after the plan is complete: daily discovery puzzles,
 rare/secret elements, journal PNG export.
