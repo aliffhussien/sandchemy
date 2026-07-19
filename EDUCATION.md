@@ -9,6 +9,13 @@ every reaction is real science, not a scripted effect. No install, no account,
 no student data collected, works offline once opened. Open `index.html` (or
 your hosted link) on any device with a browser and it just runs.
 
+**Category:** Sandchemy belongs to Virtual Lab / Simulation-Based STEM
+Learning — a named global sub-segment (~USD 1.5B in 2024, projected ~USD 4.2B
+by 2033; Business Research Insights, STEM Education Market Report), not a
+generic "education game." See `README.md`'s "Category positioning" entry and
+the pitch deck's Category slide for the full comparison against PhET,
+Labster/PraxiLabs, and Minecraft Education.
+
 ## Why bring this into a classroom
 
 Physical labs are expensive, hazard-limited, and time-rationed — most schools
@@ -137,7 +144,7 @@ curriculum-aligned worksheet pack, or want a teacher dashboard / LMS-
 friendly version for your school or college, we'd like to hear from you —
 early educator partners directly shape what gets built next.
 
-**Contact:** cookingwithcattitude@gmail.com
+**Contact:** aliff@sheikhhussien.com
 
 ---
 

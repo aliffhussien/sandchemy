@@ -10,6 +10,16 @@ your board. Sandchemy = simulation + discovery + a journal that remembers.
 Everything is saved in your browser only (localStorage) — no server, no
 account, no data leaves your device.
 
+**Category** (research, 19 Jul 2026): Sandchemy sits in Virtual Lab /
+Simulation-Based STEM Learning — a named global sub-segment valued at ~USD
+1.5B in 2024, projected ~USD 4.2B by 2033 (Business Research Insights, STEM
+Education Market Report), distinct from generic "EdTech" or "education
+games." The three usual comparables each miss a property Sandchemy combines:
+PhET (free, but fixed single-concept sims, not a sandbox), Labster/PraxiLabs
+(real virtual labs, but paid and institution-locked), and Minecraft Education
+(a real sandbox, but not scientifically modelled). Full detail in the pitch
+deck's new "Category" slide and the grant brief's new §5.1.
+
 ## Run it
 
 Open `index.html` in any browser. That's it.
@@ -50,6 +60,66 @@ server, or a separate companion product) is in PLAN.md's "Phase 9" section.
 A roadmap-only teaser (copy, no functionality) was added to `landing.html`
 (`#roadmap` section) and the pitch deck (new slide 5 of 12) — both clearly
 badged "scoped, not yet built."
+
+## Broader funding roadmap + contact email correction (19 Jul 2026)
+
+- Fixed the project's contact email everywhere it appeared — pitch deck
+  (title + closing slide), grant brief (cover + §10), `EDUCATION.md`, and
+  `landing.html` — from a placeholder gmail address to the real one,
+  `aliff@sheikhhussien.com`.
+- Researched what exists beyond CIP Spark for a Malaysia-based,
+  pre-incorporation STEM/EdTech project, and — since the founder wants to
+  pursue all of them — added every option found to both grant materials
+  rather than leaving it as chat-only findings:
+  - New pitch deck slide 12, "Beyond CIP Spark: a funding roadmap" (inserted
+    right after The Ask, before Why CIP Spark; that slide's own footer
+    number bumped 12→13 to match), and new grant brief §8.1 "Broader
+    Funding Roadmap (Beyond CIP Spark)" (inserted between Use of Funds and
+    the Eligibility Self-Assessment) — both list the same five programmes
+    with the same NOW/FOLLOW-ON/LATER staging so the two documents never
+    drift apart:
+    - **NOW, parallel with CIP Spark:** Yayasan PETRONAS's STEM education
+      grant (up to RM1M over 3 years, CSR-style, no paid-up-capital or
+      company-age requirement).
+    - **FOLLOW-ON, after Sdn Bhd incorporation:** Cradle's own CIP Sprint
+      (up to RM600k) and MRANTI's Strategic Research Fund (needs SSM
+      registration, RM10k paid-up capital, 2 directors).
+    - **LATER, once further along:** TalentCorp's LiKES internship grant
+      (RM2,000/intern, once hiring starts) and MDEC's Malaysia Digital
+      Catalyst Grant (needs RM500k paid-up capital + 1 year operating
+      history — explicitly flagged as out of reach at pre-seed, tracked as
+      a future target only, not oversold as a current fit).
+  - Sources: [Cradle Fund](https://www.cradle.com.my/cip-spark/),
+    [MRANTI SRF](https://mranti.my/srf),
+    [MDEC MDCG](https://www.mdec.my/grants/mdcg),
+    [Yayasan PETRONAS STEM](https://www.yayasanpetronas.com.my/stem/).
+  - Both files were unpacked, edited at the XML level (the new slide was
+    hand-built rather than templated, since no existing slide had a
+    5-row list layout), and re-verified via a rendered PDF/image pass —
+    pptx checked for text overflow across all 5 rows plus the two
+    neighbouring slides' page numbers, docx checked for the new
+    subsection reading cleanly on the page.
+
+## Category positioning (19 Jul 2026)
+
+- Researched where Sandchemy sits in the STEM landscape and added a sourced
+  "Category" section to both grant materials rather than leaving the market
+  framing at generic "EdTech": new pitch deck slide 7 (duplicated the Market
+  slide's stat-card layout, inserted right after it, and every following
+  slide's footer page number was bumped by one to match) and grant brief
+  §5.1, both citing the same source (Business Research Insights, STEM
+  Education Market Report — global virtual-lab/STEM-sim market, ~USD 1.5B
+  2024 → ~USD 4.2B by 2033) plus a three-way comparison against PhET,
+  Labster/PraxiLabs, and Minecraft Education.
+- Deliberately did **not** claim CIP Spark has a dedicated STEM funding
+  track — it doesn't (confirmed against Cradle's own public criteria). The
+  category section is framed as market-differentiation context for
+  reviewers, not an eligibility claim, to keep the brief's own "self-assessed,
+  re-confirm at application time" honesty standard intact.
+- Both files were unpacked, edited at the XML level, and re-verified via a
+  rendered PDF/image pass before being written back — pptx slide checked for
+  text overflow/overlap, docx pages checked for the new subsection reading
+  cleanly ahead of "6. Business Model".
 
 ## Outreach & Grant Materials polish pass (19 Jul 2026)
 
