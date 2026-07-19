@@ -1,14 +1,18 @@
 # Sandchemy Pitch Deck Outline
 
 > **Superseded by the shipped deck.** This 7-slide outline predates the real
-> 13-slide `pitch/Sandchemy_CIP_Spark_Pitch_Deck.pptx` (Problem, Solution,
-> Product, Roadmap, Market, **Category**, Business Model, Traction, Team,
-> Ask, Why CIP Spark, Close). Kept here as the original planning sketch, not
-> as current truth — check the `.pptx` for what actually ships. The one
-> addition worth noting even here: a **Category** slide (19 Jul 2026) names
-> Sandchemy's specific STEM sub-segment — Virtual Lab / Simulation-Based STEM
-> Learning, ~USD 1.5B (2024) → ~USD 4.2B (2033), Business Research Insights —
-> and contrasts it against PhET, Labster/PraxiLabs, and Minecraft Education.
+> 14-slide `pitch/Sandchemy_CIP_Spark_Pitch_Deck.pptx` (Title, Problem,
+> Solution, Product, Roadmap, Market, **Category**, Business Model,
+> Traction, Team, Ask, **Funding Roadmap**, Why CIP Spark, Close). Kept here
+> as the original planning sketch, not as current truth — check the `.pptx`
+> for what actually ships. Two additions worth noting even here (19 Jul
+> 2026): a **Category** slide naming Sandchemy's specific STEM sub-segment —
+> Virtual Lab / Simulation-Based STEM Learning, ~USD 1.5B (2024) → ~USD 4.2B
+> (2033), Business Research Insights — contrasted against PhET,
+> Labster/PraxiLabs, and Minecraft Education; and a **Funding Roadmap**
+> slide (right after The Ask) listing five grants beyond CIP Spark —
+> Yayasan PETRONAS, CIP Sprint, MRANTI SRF, TalentCorp LiKES, MDEC MDCG —
+> staged NOW / FOLLOW-ON / LATER.
 
 ## Slide 1: Title
 - **Title**: Sandchemy

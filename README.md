@@ -58,7 +58,8 @@ three live options being weighed (opt-in + disclosed, a minimal proxy
 server, or a separate companion product) is in PLAN.md's "Phase 9" section.
 
 A roadmap-only teaser (copy, no functionality) was added to `landing.html`
-(`#roadmap` section) and the pitch deck (new slide 5 of 12) — both clearly
+(`#roadmap` section) and the pitch deck (new slide 5, 12 slides in the deck
+at the time — now 14 after later additions, still slide 5) — both clearly
 badged "scoped, not yet built."
 
 ## Broader funding roadmap + contact email correction (19 Jul 2026)
