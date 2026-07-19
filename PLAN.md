@@ -1974,7 +1974,18 @@ with-smoke shape). Rebuilt, re-rendered, and re-inspected all 12 slides
 again — no other defects found (checked for text overflow, icon
 distortion, overlap, and alignment on every slide).
 
----
+**Second correction (same day, Cat flagged it again after the first
+fix):** `GiSmokingVolcano` — the replacement above — turned out to have
+its own defect: a flat, straight-cut edge baked directly into the smoke-
+cloud path itself, visible on close inspection (confirmed it wasn't a
+scaling/clipping bug on our end via a pixel alpha-channel bounding-box
+check — the source glyph is just drawn that way). Rather than gamble on a
+third library icon, replaced it with a small hand-drawn custom glyph
+(mountain + 3-flame eruption + spark dots, plain SVG polygons/circles,
+`VOLCANO_SVG` in `gen_icons.js`) — fully in our own control instead of
+inheriting whatever a third-party icon set happens to contain. Rebuilt
+and re-verified via a zoomed crop, not just a full-slide glance this
+time, since the previous miss came from checking at too small a scale.
 
 ## Standing rules for every phase
 
