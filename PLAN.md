@@ -24,11 +24,21 @@
 > the numbered Phase list above: it's business/outreach collateral, not a
 > sandbox feature, and touches zero engine/content files.
 >
-> **Next up: pick a new Phase from here, start a fresh weekly content
-> update (new elements via `elements.js` only, per README's own maintenance
-> model), or continue the outreach workstream** (e.g. finalizing the
-> co-founder/company-registration fields flagged "to confirm" in the grant
-> brief). The old sub-phase kickoff prompt below is kept for reference/history:
+> **A new Phase 9 — "Pluto" AI orchestrator — is now SCOPED (19 Jul 2026,
+> see its own section near the end of this file), but NOT started.** It is
+> blocked on one real open decision that needs Aliff's explicit answer
+> before any code gets written: this project's stated zero-server/zero-
+> data-leaves-the-device vision has no exception carved out for AI calls
+> yet, and Pluto necessarily makes them. Do not start Phase 9 without that
+> decision made first.
+>
+> **Next up: pick a new Phase from here (Phase 9's 9a sub-phase is the
+> recommended next build once its blocking decision is resolved), start a
+> fresh weekly content update (new elements via `elements.js` only, per
+> README's own maintenance model), or continue the outreach workstream**
+> (e.g. finalizing the co-founder/company-registration fields flagged "to
+> confirm" in the grant brief). The old sub-phase kickoff prompt below is
+> kept for reference/history:
 >
 > ```
 > Read PLAN.md and README.md in this repo (Sandchemy — a falling-sand
@@ -48,7 +58,11 @@
 **Vision (Aliff's words):** perfect, 100% custom sandbox. Logically smart —
 reactions should feel real. Visuals so good it feels alive ("3D feel").
 Weekly small updates, never overwhelming, easy to maintain, zero servers,
-zero data leaving the device.
+zero data leaving the device. **First proposed exception to "zero servers,
+zero data leaving the device" (19 Jul 2026): Phase 9's Pluto AI
+orchestrator, since any real AI feature necessarily makes an outbound
+call — see Phase 9's own section for the open decision this needs before
+it can move forward.**
 
 **Honest scoping decision (agreed 17 Jul 2026):** NO true 3D rewrite — that
 would mean a new engine and permanent complexity. Instead: real physics +
@@ -1828,6 +1842,116 @@ regression — updated the cheatsheet's own copy (`index.html`) to say
 
 ---
 
+## Phase 9 — Pluto: the AI orchestrator (SCOPED, not started)
+
+**Origin (19 Jul 2026):** a brainstorm session with Cat about bringing AI
+into both the product and the grant story. The opening idea — an AI that
+fetches and holds "every legit 100% confirmed" fact from all of physics,
+chemistry, and math as a standing single source of truth — was deliberately
+narrowed after discussion. Two problems with that opening version: science
+is a provisional, revised body of work, not a frozen truth to crawl and
+store once ("100% confirmed" is a claim that ages badly and is a
+credibility risk, not a feature); and building/maintaining a self-updating,
+web-crawled corpus of all of science is roughly a second company, not a
+buildable grant-scale feature. What survived and got sharper instead:
+**Pluto**, an AI orchestrator built on top of the science Sandchemy already
+has — the same sourced melting points, densities, and reaction chemistry
+behind `elements.js`/SCIENCE.md — plus real citations shown rather than
+truth asserted, plus a persona system that adjusts explanation depth for
+students vs. teachers vs. professors (the same three audiences EDUCATION.md
+already targets). Named for the demoted planet, on brand for a project
+that treats real science with a sense of humor about itself.
+
+**The one open decision that blocks all of this, asked rather than guessed:**
+this file's own stated vision is "zero servers, zero data leaving the
+device" — every phase so far has honored that literally (no accounts, no
+analytics, no network calls beyond caching the app's own static shell in
+7a). Pluto, by definition, needs at least one outbound call per query (to
+an LLM, and optionally a search tool) — that is data leaving the device,
+which directly contradicts language already shipped in `landing.html` and
+`pitch/Sandchemy_CIP_Spark_Grant_Brief.docx` ("Zero data collection",
+"nothing ever leaves your device"). This needs an explicit, conscious
+answer before any implementation — not a silent break of a promise already
+made publicly. Live options to choose from, none decided yet:
+1. Pluto is **opt-in and clearly disclosed** — off by default, a visible
+   "Pluto sends your question to an AI service; nothing else about your
+   session is sent" notice the first time it's used. Zero data collection
+   remains true for the core sandbox; Pluto is an explicitly separate,
+   disclosed exception.
+2. Pluto runs through a **minimal proxy Aliff controls** (so no raw LLM
+   API key sits in client-side JS, which anyone could extract from a
+   plain HTML/CSS/JS app) — this is the first time this project would need
+   *any* server component at all, which is a real architecture shift worth
+   naming, not quietly slipping in.
+3. Punt on Pluto entirely and treat it as a **separate companion product**
+   with its own honest positioning, keeping Sandchemy itself untouched and
+   fully offline forever.
+
+**Recommended split, in this order (mirrors how Phase 7 was broken into
+7a–7d — each sub-phase is its own session, smallest/lowest-risk first):**
+
+### 9a. Ask Pluto — in-app tutor (recommended MVP / flagship)
+
+**Goal:** a panel next to the Discovery Journal that explains a just-
+discovered reaction using Sandchemy's own sourced chemistry, at a depth
+the user picks — "Explain like I'm curious" / "Give me the real chemistry"
+/ "Give me this as a teaching point" (student / professor / teacher
+personas). This is the single most demonstrable "AI meaningfully applied
+to education" story for the CIP Spark pitch, and it reuses content already
+researched rather than inventing a new knowledge base.
+- Needs the server/proxy decision above resolved first.
+- Knowledge grounding: pull from a small, curated, versioned dataset
+  derived from `elements.js`/SCIENCE.md's own already-sourced facts —
+  NOT an open web crawl. If a question falls outside that curated set,
+  Pluto should say so rather than improvise, and only reach for a live
+  search tool with the answer clearly marked as "found just now" vs.
+  "from Sandchemy's verified set."
+- Files (sketch, not final): a new `pluto.js`, kept as its own layer the
+  same way `effects.js`/`audio.js` are — `elements.js` (content) and
+  `game.js` (engine) stay untouched, same golden rule as every phase.
+- Done when: a real discovery triggers a working "Ask Pluto" prompt, all
+  three personas produce genuinely different depth (not just a different
+  greeting), every factual claim traces back to Sandchemy's own sourced
+  data or a clearly-marked live search result, and the data-leaves-the-
+  device disclosure is visible and honest before first use.
+
+### 9b. Authoring copilot (dev-only, no end user ever sees this)
+
+**Goal:** speeds up the actual weekly workflow this file already
+documents ("Add an id to E, an entry to ELEMENTS, its recipe(s) to
+REACTIONS") — Pluto drafts a new element's melting point/density/reaction
+chemistry with citations for Aliff to verify before committing, rather
+than manual research each week. Lower risk than 9a since it never faces
+an external user and nothing it drafts ships without a human checking it
+first — could plausibly go BEFORE 9a if Aliff wants the workflow win
+sooner than the pitch-deck win.
+
+### 9c. Teacher generator
+
+**Goal:** drafts lesson plans/quiz questions grounded in mechanics that
+actually exist in the sandbox, for the teacher/professor audience
+EDUCATION.md already targets. Depends on 9a's persona system existing
+first.
+
+### 9d. Misconception catcher — PARKED, not scoped in detail
+
+**Idea:** watches what a student builds and flags when their emerging
+mental model diverges from the real physics/chemistry. Highest pedagogical
+ceiling, also the heaviest lift (real-time reasoning over live sandbox
+state, not just a one-shot Q&A) — parked as a future direction rather than
+scoped now, revisit after 9a ships and the server/disclosure question has
+real usage data behind it.
+
+**Explicitly out of scope, permanently, unless revisited from scratch:**
+the original "single source of truth for all of science" ambition. Kept
+here as a long-term aspirational note, not a near-term commitment — Pluto
+should stay scoped to what it can honestly ground and cite.
+
+**No code has been written for Phase 9. This section is a plan, not a
+status report — the open decision above needs an answer before 9a starts.**
+
+---
+
 ## Standing rules for every phase
 
 1. One phase = one session = one outcome. Never mix phases.
@@ -1975,6 +2099,16 @@ regression — updated the cheatsheet's own copy (`index.html`) to say
   with zero console errors. One intentional, documented behavior change:
   7b's 1-9/0 shortcuts are now tab-relative instead of palette-global.
   No open items.)
+- [ ] Phase 9 — Pluto AI orchestrator — SCOPED, not started (see the
+  dedicated Phase 9 section above. Blocked on one real open decision before
+  any code gets written: this project's own zero-server/zero-data-leaves-
+  the-device vision (stated at the top of this file) has no exception for
+  AI calls yet — needs Aliff's explicit answer, not a guess.)
+  - [ ] 9a — Ask Pluto (in-app tutor, persona-based) — SCOPED, not started
+  - [ ] 9b — Authoring copilot (dev-only content research aid) — SCOPED,
+    not started
+  - [ ] 9c — Teacher generator (lesson/quiz drafts) — SCOPED, not started
+  - [ ] 9d — Misconception catcher — PARKED, not scoped in detail
 - [x] Outreach & Grant Materials (website, pitch deck, grant brief,
   educator guide) — 19 Jul 2026 (see the dedicated section below. Not a
   numbered Phase — business/outreach collateral, zero engine/content files

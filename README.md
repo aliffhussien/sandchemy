@@ -23,6 +23,30 @@ Open `index.html` in any browser. That's it.
 3. Done — palette, journal, physics, and discovery toasts all pick it up
    automatically. `game.js` (the engine) should not need edits for content.
 
+## Phase 9 — Pluto AI orchestrator (SCOPED, not started — 19 Jul 2026)
+
+Planned, not built. **Pluto** is an AI layer on top of Sandchemy's own
+already-sourced science (not an open-web crawl) with a persona system that
+adjusts explanation depth for students, teachers, and professors. Named
+for the demoted planet.
+
+- **9a — Ask Pluto** (recommended MVP): an in-app tutor next to the
+  Discovery Journal explaining real reactions at the depth you pick.
+- **9b — Authoring copilot**: drafts new element data + citations for
+  Aliff to verify before committing — speeds up the existing weekly
+  `elements.js` workflow above, never faces an end user.
+- **9c — Teacher generator**: lesson/quiz drafts grounded in real in-app
+  mechanics, for the audience `EDUCATION.md` already targets.
+- **9d — Misconception catcher**: parked, not scoped in detail yet.
+
+**Blocked on one real decision before any code gets written:** this
+project's own zero-server/zero-data-leaves-the-device promise (see the
+intro above, and the same claim already shipped in `landing.html` and the
+grant brief) has no carved-out exception for AI calls yet — any real AI
+feature necessarily sends a query off-device. Full detail, including the
+three live options being weighed (opt-in + disclosed, a minimal proxy
+server, or a separate companion product) is in PLAN.md's "Phase 9" section.
+
 ## Outreach & Grant Materials polish pass (19 Jul 2026)
 
 - `landing.html` rebuilt for full responsiveness: fluid `clamp()`
