@@ -47,6 +47,10 @@ feature necessarily sends a query off-device. Full detail, including the
 three live options being weighed (opt-in + disclosed, a minimal proxy
 server, or a separate companion product) is in PLAN.md's "Phase 9" section.
 
+A roadmap-only teaser (copy, no functionality) was added to `landing.html`
+(`#roadmap` section) and the pitch deck (new slide 5 of 12) — both clearly
+badged "scoped, not yet built."
+
 ## Outreach & Grant Materials polish pass (19 Jul 2026)
 
 - `landing.html` rebuilt for full responsiveness: fluid `clamp()`

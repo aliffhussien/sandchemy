@@ -1950,6 +1950,18 @@ should stay scoped to what it can honestly ground and cite.
 **No code has been written for Phase 9. This section is a plan, not a
 status report — the open decision above needs an answer before 9a starts.**
 
+**Marketing/pitch teaser shipped ahead of the actual feature (19 Jul
+2026):** since Pluto strengthens both the public site and the CIP Spark
+narrative, a roadmap-only teaser was added to `landing.html` (new
+`#roadmap` section, nav link, honestly badged "Roadmap — scoped, not yet
+built", restating the same disclosure commitment above) and to
+`pitch/Sandchemy_CIP_Spark_Pitch_Deck.pptx` (new slide 5, badged "SCOPED —
+NOT YET BUILT", plus a tie-in on the Traction & Roadmap and Ask slides'
+timelines/milestones). This is copy only — zero Pluto code exists, no
+claim anywhere states otherwise, and both placements say so explicitly.
+Deck slide count is now 12 (was 11); build script is
+`outputs/deck/build_deck.js` in the working session's scratchpad.
+
 ---
 
 ## Standing rules for every phase
