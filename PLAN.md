@@ -1962,6 +1962,18 @@ claim anywhere states otherwise, and both placements say so explicitly.
 Deck slide count is now 12 (was 11); build script is
 `outputs/deck/build_deck.js` in the working session's scratchpad.
 
+**Defect sweep on the deck (19 Jul 2026, prompted by "polish the deck,
+make sure no defect"):** re-inspected all 12 slides individually. Found
+one real defect, not related to Pluto: the "volcano" icon (used on slide
+3's mock preview and slide 4's "Prebuilt Scenarios" card) rendered as an
+abstract radiating burst that reads like a firework or palm frond, not a
+volcano — `gen_icons.js` was pointed at `GiVolcano`, whose actual glyph
+doesn't read as intended. Confirmed via a side-by-side pixel-render
+comparison, then switched to `GiSmokingVolcano` (an unambiguous mountain-
+with-smoke shape). Rebuilt, re-rendered, and re-inspected all 12 slides
+again — no other defects found (checked for text overflow, icon
+distortion, overlap, and alignment on every slide).
+
 ---
 
 ## Standing rules for every phase
